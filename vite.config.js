@@ -1,9 +1,16 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'path'
 
 export default defineConfig({
     root: 'app',
-    base: '/cs408-visualiser/', // repo name goes here!
+    base: '/cs408-visualiser/',
     build: {
-        outDir: 'dist'
-    }
+        outDir: 'app/dist',
+        rollupOptions: {
+            input: {
+                main: resolve(__dirname, 'app/index.html'),
+            },
+        },
+    },
 })
+
