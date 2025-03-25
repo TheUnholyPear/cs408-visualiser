@@ -5,7 +5,7 @@ export default defineConfig({
     root: 'app',
     base: '/cs408-visualiser/',
     build: {
-        outDir: 'app/dist',
+        outDir: 'dist', // <- this will go to app/dist
         rollupOptions: {
             input: {
                 main: resolve(__dirname, 'app/index.html'),

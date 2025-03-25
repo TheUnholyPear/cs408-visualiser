@@ -245,6 +245,7 @@ document.addEventListener("DOMContentLoaded", function() {
         wipeCosts();
         wipeLinksAndWeights();
 
+        // If no nodes, just clear
         if (numNodes < 1) {
             nodes = [];
             links = [];
@@ -255,58 +256,119 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
+        // Decide if we include weights on edges
         const includeWeights = document.getElementById("includeWeights").checked;
+
+        // 1) Create random-positioned nodes
         nodes = Array.from({ length: numNodes }, (_, i) => ({
             id: i,
             x: Math.random() * (width - 2 * outerRadius) + outerRadius,
             y: Math.random() * (height - 2 * outerRadius) + outerRadius
         }));
 
-        // Fisher–Yates shuffle to preserve your original randomness
+        // Shuffle node IDs so spanning tree is random
         let nodeIds = nodes.map(n => n.id);
         for (let i = nodeIds.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [nodeIds[i], nodeIds[j]] = [nodeIds[j], nodeIds[i]];
         }
 
-        links = [];
-        // Build spanning tree
+        // 2) Build a spanning tree
+        let linksTemp = [];
         for (let i = 1; i < nodeIds.length; i++) {
             const src = nodeIds[Math.floor(Math.random() * i)];
             const tgt = nodeIds[i];
-            links.push({ source: src, target: tgt, weight: includeWeights ? Math.floor(Math.random() * 20) + 1 : undefined });
+            linksTemp.push({
+                source: src,
+                target: tgt,
+                weight: includeWeights
+                    ? Math.floor(Math.random() * 20) + 1
+                    : undefined
+            });
         }
 
-        // Add extra random edges
-        const candidateEdges = [];
+        // Track each node's degree
+        let degreeCount = new Array(numNodes).fill(0);
+        linksTemp.forEach(({ source, target }) => {
+            degreeCount[source]++;
+            degreeCount[target]++;
+        });
+
+        // 3) Build a list of all remaining edges not already in the spanning tree
+        let candidateEdges = [];
         for (let i = 0; i < numNodes; i++) {
             for (let j = i + 1; j < numNodes; j++) {
-                if (!links.some(l => {
+                // Skip if it's already in linksTemp
+                if (linksTemp.some(l => {
                     const s = normalizeEndpoint(l.source);
                     const t = normalizeEndpoint(l.target);
                     return (s === i && t === j) || (s === j && t === i);
                 })) {
-                    candidateEdges.push({ source: i, target: j });
+                    continue;
                 }
+                candidateEdges.push({ source: i, target: j });
             }
         }
-        const extraEdges = Math.min(Math.floor(numNodes / 2), candidateEdges.length);
-        for (let k = 0; k < extraEdges; k++) {
-            const idx = Math.floor(Math.random() * candidateEdges.length);
-            const edge = candidateEdges.splice(idx, 1)[0];
-            links.push({ ...edge, weight: includeWeights ? Math.floor(Math.random() * 20) + 1 : undefined });
+
+        // Shuffle candidate edges for randomness
+        for (let i = candidateEdges.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidateEdges[i], candidateEdges[j]] = [candidateEdges[j], candidateEdges[i]];
         }
 
-        nextId = numNodes;
-        buildAdjacency();
+        // Let’s define the fraction of nodes allowed to have degree 3
+        // e.g., no more than 20% of nodes
+        const maxDegree3Fraction = 0.2;
 
-        // Hook into the persistent simulation
+        // 4) Try adding more edges. Stop if either endpoint is degree 3,
+        //    or if adding the edge would push fraction of degree-3 nodes above 20%.
+        candidateEdges.forEach(edge => {
+            const { source, target } = edge;
+            if (degreeCount[source] < 3 && degreeCount[target] < 3) {
+                // Check how many are currently at degree 3
+                let countDeg3 = degreeCount.filter(d => d === 3).length;
+                let fractionDeg3 = countDeg3 / numNodes;
+
+                // If neither node is at 3, check if *after* adding them to 3
+                // we still are within the fraction limit.
+                // In the worst case, both might jump from 2 -> 3,
+                // so let's see if that would push us over the threshold.
+                let inc = 0;
+                if (degreeCount[source] === 2) inc++;
+                if (degreeCount[target] === 2) inc++;
+                // If the fraction with deg3 after potential increment would exceed
+                // maxDegree3Fraction, skip adding.
+                if ((countDeg3 + inc) / numNodes > maxDegree3Fraction) {
+                    return; // skip
+                }
+
+                // Otherwise, add this edge
+                linksTemp.push({
+                    source,
+                    target,
+                    weight: includeWeights
+                        ? Math.floor(Math.random() * 20) + 1
+                        : undefined
+                });
+                degreeCount[source]++;
+                degreeCount[target]++;
+            }
+        });
+
+        // Done. Now we have a spanning tree plus some random edges,
+        // with max deg <= 3, and limited fraction of deg=3 nodes
+        links = linksTemp;
+        nextId = numNodes;
+
+        // Update adjacency & force simulation
+        buildAdjacency();
         simulation.nodes(nodes);
         simulation.force("link").links(links);
         simulation.alpha(1).restart();
 
         drawGraph();
     }
+
 
     // ───────── Search‑Tree Helpers ─────────
     function clearSearchTree() {
@@ -322,19 +384,36 @@ document.addEventListener("DOMContentLoaded", function() {
         const svg = d3.select("#searchTreePanelSvg");
         svg.selectAll("*").remove();
         if (!snapshot) return;
+
         const svgEl = document.getElementById("searchTreePanelSvg");
         const w = svgEl.clientWidth;
         const h = svgEl.clientHeight;
         if (w === 0 || h === 0) return;
 
         const startId = +document.getElementById("startNodeSelect").value;
-        const root = d3.hierarchy(buildTreeData(snapshot.parents, startId));
-        d3.tree().size([w - 2 * outerRadius, h - 2 * outerRadius])(root);
 
-        // Draw links
+        // 1) Build the hierarchy
+        const root = d3.hierarchy(buildTreeData(snapshot.parents, startId));
+
+        // 2) Copy discoveryIndex from snapshot to each node in the hierarchy
+        root.each(d => {
+            const snapNode = snapshot.nodes.find(n => n.id === d.data.id);
+            d.data.discoveryIndex = snapNode?.discoveryIndex ?? Infinity;
+        });
+
+        // 3) Sort children by their discoveryIndex so that
+        //    siblings appear left->right in the order discovered
+        root.sort((a, b) => a.data.discoveryIndex - b.data.discoveryIndex);
+
+        // 4) Run the tree layout (top to bottom)
+        d3.tree()
+            .size([w - 2 * outerRadius, h - 2 * outerRadius])(root);
+
+        // Helper functions for bounding x/y to the panel
         const cx = d => Math.max(outerRadius, Math.min(w - outerRadius, d.x + outerRadius));
         const cy = d => Math.max(outerRadius, Math.min(h - outerRadius, d.y + outerRadius));
 
+        // ───────── Draw links ─────────
         svg.selectAll(".link")
             .data(root.links())
             .enter().append("line")
@@ -344,11 +423,11 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("x2", d => cx(d.target))
             .attr("y2", d => cy(d.target))
             .classed("path-highlight-link", d =>
-                snapshot.path?.includes(d.source.data.id) && snapshot.path.includes(d.target.data.id)
+                snapshot.path?.includes(d.source.data.id) &&
+                snapshot.path.includes(d.target.data.id)
             );
 
-
-        // Draw nodes
+        // ───────── Draw nodes ─────────
         const nodeG = svg.selectAll(".node-group")
             .data(root.descendants())
             .enter().append("g")
@@ -357,23 +436,30 @@ document.addEventListener("DOMContentLoaded", function() {
             .classed("goal-highlight", d => snapshot.goal && d.data.id === +snapshot.goal)
             .classed("path-highlight", d => snapshot.path?.includes(d.data.id))
             .classed("current-highlight", d => snapshot.currentNode === d.data.id)
-            .attr("transform", d => {
-                const x = Math.max(outerRadius, Math.min(w - outerRadius, d.x + outerRadius));
-                const y = Math.max(outerRadius, Math.min(h - (outerRadius + 25), d.y + outerRadius));
-                return `translate(${x},${y})`;
-            });
+            .attr("transform", d => `translate(${cx(d)},${cy(d)})`);
 
-        nodeG.append("circle").attr("class", "outer-circle").attr("r", outerRadius);
-        nodeG.append("circle").attr("class", "inner-circle").attr("r", innerRadius);
+        // Outer circle
+        nodeG.append("circle")
+            .attr("class", "outer-circle")
+            .attr("r", outerRadius);
+
+        // Inner circle
+        nodeG.append("circle")
+            .attr("class", "inner-circle")
+            .attr("r", innerRadius);
+
+        // Node label (ID)
         nodeG.append("text")
             .attr("class", "node-label")
             .attr("x", 0)
             .attr("y", -4)
             .attr("text-anchor", "middle")
             .text(d => d.data.id);
+
+        // Cost label
         nodeG.append("text")
             .attr("class", "cost-label")
-            .attr("x", 0 - outerRadius)
+            .attr("x", -outerRadius)
             .attr("y", outerRadius + 12)
             .attr("text-anchor", "start")
             .attr("dominant-baseline", "middle")
@@ -383,6 +469,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 const snapNode = snapshot.nodes.find(n => n.id === d.data.id);
                 return snapNode?.cost !== undefined ? `C: ${snapNode.cost}` : "";
             });
+
+        // Heuristic label
         nodeG.append("text")
             .attr("class", "heuristic-label")
             .attr("x", 0)
@@ -393,7 +481,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 return snapNode?.h !== undefined ? `H: ${snapNode.h}` : "";
             });
 
-        // Link weight labels
+        // ───────── Link weight labels ─────────
         svg.selectAll(".link-weight-label")
             .data(root.links())
             .enter()
@@ -408,18 +496,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 const parent = d.source.data.id;
                 const child = d.target.data.id;
                 const link = snapshot.links.find(l =>
-                    ((normalizeEndpoint(l.source) === parent && normalizeEndpoint(l.target) === child) ||
-                        (normalizeEndpoint(l.source) === child && normalizeEndpoint(l.target) === parent))
+                    (normalizeEndpoint(l.source) === parent &&
+                        normalizeEndpoint(l.target) === child) ||
+                    (normalizeEndpoint(l.source) === child &&
+                        normalizeEndpoint(l.target) === parent)
                 );
                 return link?.weight !== undefined ? link.weight : "";
             });
 
+        // Show/hide link weights based on toggle
         const showWeights = document.getElementById("toggleWeightsSwitch").checked;
         d3.selectAll("#searchTreePanelSvg .link-weight-label")
             .style("display", showWeights ? "block" : "none");
 
+        // Finally, update stats (like expanded/discovered counts)
         updateSearchTreeStats(snapshot);
     }
+
 
     const treeTabBtn = document.getElementById("tree-tab");
     if (treeTabBtn) {
@@ -629,18 +722,35 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         nextId++;
         buildAdjacency();
+
+        // re-assign nodes and links to the force simulation
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
+
+// nudge the simulation a bit to “wake it up”
+        simulation.alpha(1).restart();
+
         drawGraph();
         updateGoalNodeSelect();
     }
-
     function deleteNode(nodeId) {
+        // Remove the node and its links
         nodes = nodes.filter(n => n.id !== nodeId);
         links = links.filter(l => {
             const s = normalizeEndpoint(l.source);
             const t = normalizeEndpoint(l.target);
             return s !== nodeId && t !== nodeId;
         });
+
+        // Rebuild adjacency
         buildAdjacency();
+
+        // Update and restart the force simulation with the new arrays
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
+        simulation.alpha(1).restart();
+
+        // Finally, redraw
         drawGraph();
     }
 
@@ -694,6 +804,13 @@ document.addEventListener("DOMContentLoaded", function() {
         hideLinkWeights();
         isAlgorithmRunning = true;
         currentPath = null;
+
+        // 1) Reset discovery indices and keep a discovered counter
+        nodes.forEach(n => {
+            n.discoveryIndex = undefined;
+        });
+        let discoveredCount = 0;
+
         const visited = new Set();
         const queue = [startId];
         const expanded = [];
@@ -712,6 +829,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const current = queue.shift();
             expanded.push(current);
             highlightNode(current);
+
             if (current === goalId) {
                 let path = [current];
                 while (path[0] !== startId) {
@@ -723,26 +841,44 @@ document.addEventListener("DOMContentLoaded", function() {
                 isAlgorithmRunning = false;
                 return;
             }
+
             if (current === startId) {
                 delayedLog(`BFS: Root Node ${startId}`, expanded);
+                // Mark the start node's discoveryIndex if it isn't set:
+                const startNodeObj = getNode(startId);
+                if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
+                    startNodeObj.discoveryIndex = discoveredCount++;
+                }
             } else {
                 delayedLog(`BFS: Moving to Node ${current}`, expanded);
             }
+
+            // 2) For each neighbor, if it isn't visited, record discovery index
             adjacency[current]?.forEach(nbr => {
                 if (!visited.has(nbr)) {
                     visited.add(nbr);
                     queue.push(nbr);
+
                     if (!(nbr in parents)) {
                         parents[nbr] = current;
                     }
+
+                    // Set the node's discoveryIndex if it's not set yet
+                    const nbrNodeObj = getNode(nbr);
+                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
+                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    }
+
                     delayedLog(`BFS: Discovered Node ${nbr}. Adding to queue.`, expanded);
                 }
             });
+
             delayedLog(`BFS: Queue: [${queue.join(", ")}] | Discovered: [${[...visited].join(", ")}]`, expanded);
             scheduleTimeout(visitNext, delay);
         }
         visitNext();
     }
+
 
     function dfs(startId, goalId) {
         stopAlgorithm();
@@ -750,24 +886,44 @@ document.addEventListener("DOMContentLoaded", function() {
         hideLinkWeights();
         isAlgorithmRunning = true;
         currentPath = null;
+
+        // 1) Reset discovery indices on all nodes, and keep a discovered counter
+        nodes.forEach(n => {
+            n.discoveryIndex = undefined;
+        });
+        let discoveredCount = 0;
+
         const visited = new Set();
         const stack = [startId];
         const expanded = [];
         visited.add(startId);
+
         const parents = {};
         currentParents = parents;
 
         function visitNext() {
             if (!isAlgorithmRunning) return;
             delay = 0;
+
             if (stack.length === 0) {
                 delayedLog(`DFS: Finished without reaching a goal`, expanded);
                 isAlgorithmRunning = false;
                 return;
             }
+
             const current = stack.pop();
             expanded.push(current);
+
+            // If the start node has no discovery index yet, set it
+            if (current === startId) {
+                const startNodeObj = getNode(startId);
+                if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
+                    startNodeObj.discoveryIndex = discoveredCount++;
+                }
+            }
+
             highlightNode(current);
+
             if (current === goalId) {
                 let path = [current];
                 while (path[0] !== startId) {
@@ -775,30 +931,50 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 currentPath = path;
                 highlightPath(currentPath);
-                delayedLog(`DFS: Goal Node ${goalId} found! \nPath: ${currentPath.join(" -> ")}`, expanded);
+                delayedLog(
+                    `DFS: Goal Node ${goalId} found! \nPath: ${currentPath.join(" -> ")}`,
+                    expanded
+                );
                 isAlgorithmRunning = false;
                 return;
             }
+
             if (current === startId) {
                 delayedLog(`DFS: Root Node ${startId}`, expanded);
             } else {
                 delayedLog(`DFS: Visiting Node ${current}`, expanded);
             }
+
+            // 2) For each neighbor, if we haven't visited yet, mark discoveryIndex
             const neighbors = adjacency[current] || [];
             for (let i = neighbors.length - 1; i >= 0; i--) {
                 const nbr = neighbors[i];
                 if (!visited.has(nbr)) {
                     visited.add(nbr);
                     stack.push(nbr);
+
+                    // Record parent if not known
                     if (!(nbr in parents)) {
                         parents[nbr] = current;
                     }
+
+                    // Assign discoveryIndex to newly discovered node
+                    const nbrNodeObj = getNode(nbr);
+                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
+                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    }
+
                     delayedLog(`DFS: Discovered Node ${nbr}. Adding to stack.`, expanded);
                 }
             }
-            delayedLog(`DFS: Stack: [${stack.join(", ")}] | Visited: [${[...visited].join(", ")}]`, expanded);
+
+            delayedLog(
+                `DFS: Stack: [${stack.join(", ")}] | Visited: [${[...visited].join(", ")}]`,
+                expanded
+            );
             scheduleTimeout(visitNext, delay);
         }
+
         visitNext();
     }
 
@@ -808,10 +984,25 @@ document.addEventListener("DOMContentLoaded", function() {
         showLinkWeights();
         isAlgorithmRunning = true;
         currentPath = null;
+
+        // Ensure all links have weights
         if (links.some(link => link.weight === undefined)) {
             alert("Error: Graph must be weighted to run Uniform Cost Search (UCS).");
             return;
         }
+
+        // 1) Reset discovery indices & keep a counter
+        nodes.forEach(n => {
+            n.discoveryIndex = undefined;
+        });
+        let discoveredCount = 0;
+
+        // Mark the start node's discoveryIndex right away
+        const startNodeObj = getNode(startId);
+        if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
+            startNodeObj.discoveryIndex = discoveredCount++;
+        }
+
         let frontier = [{ node: startId, cost: 0 }];
         let explored = new Set();
         let parents = {};
@@ -823,26 +1014,37 @@ document.addEventListener("DOMContentLoaded", function() {
         function visitNext() {
             if (!isAlgorithmRunning) return;
             delay = 0;
+
             if (frontier.length === 0) {
                 delayedLog("UCS: No path found. Frontier empty.", expanded);
                 isAlgorithmRunning = false;
                 return;
             }
+
             frontier.sort((a, b) => a.cost - b.cost);
             let currentObj = frontier.shift();
             let current = currentObj.node;
             let currentCost = currentObj.cost;
+
             if (currentCost > costs[current]) {
-                delayedLog(`UCS: Skipping node [${current}] with cost ${currentCost} (current best cost is ${costs[current]}).`, expanded);
+                delayedLog(
+                    `UCS: Skipping node [${current}] with cost ${currentCost} ` +
+                    `(better cost is ${costs[current]}).`,
+                    expanded
+                );
                 scheduleTimeout(visitNext, delay);
                 return;
             }
+
             explored.add(current);
             highlightNode(current);
             setNodeCost(current, currentCost);
             expanded.push(current);
+
             scheduleTimeout(() => displayNodeCost(current, currentCost), delay - 1);
             delayedLog(`UCS: Expanding node [${current}] with cost ${currentCost}.`, expanded);
+
+            // Goal check
             if (current === goalId) {
                 let path = [current];
                 while (path[0] !== startId) {
@@ -850,36 +1052,61 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 currentPath = path;
                 highlightPath(currentPath);
-                delayedLog(`UCS: Goal node [${goalId}] reached! Path: ${currentPath.join(" -> ")}, Total cost: ${currentCost}.`, expanded);
+                delayedLog(
+                    `UCS: Goal node [${goalId}] reached! Path: ${currentPath.join(" -> ")}, ` +
+                    `Total cost: ${currentCost}.`,
+                    expanded
+                );
                 isAlgorithmRunning = false;
                 return;
             }
+
+            // Expand neighbors
             (adjacency[current] || []).forEach(neighbor => {
                 let link = links.find(l => {
                     const s = normalizeEndpoint(l.source);
                     const t = normalizeEndpoint(l.target);
-                    return (s === current && t === neighbor) || (t === current && s === neighbor);
+                    return (
+                        (s === current && t === neighbor) ||
+                        (t === current && s === neighbor)
+                    );
                 });
                 if (!link) return;
+
                 let newCost = currentCost + link.weight;
-                if (costs[neighbor] === undefined || newCost <= costs[neighbor]) {
+                if (costs[neighbor] === undefined || newCost < costs[neighbor]) {
                     let oldCost = costs[neighbor] !== undefined ? costs[neighbor] : "none";
                     costs[neighbor] = newCost;
                     parents[neighbor] = current;
+
+                    // 2) Assign discoveryIndex if this neighbor hasn't been discovered before
+                    const nbrNodeObj = getNode(neighbor);
+                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
+                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    }
+
                     frontier.push({ node: neighbor, cost: newCost });
                     setNodeCost(neighbor, newCost);
+
                     scheduleTimeout(() => displayNodeCost(neighbor, newCost), delay - 1);
-                    delayedLog(`UCS: Found node [${neighbor}], Updating cost from ${oldCost} to ${newCost}.`, expanded);
+                    delayedLog(
+                        `UCS: Found node [${neighbor}], Updating cost from ${oldCost} to ${newCost}.`,
+                        expanded
+                    );
+
                     if (explored.has(neighbor)) {
-                        delayedLog(`UCS: Reopening node [${neighbor}] because cost was overridden.`, expanded);
+                        delayedLog(`UCS: Reopening node [${neighbor}] (cost improved).`, expanded);
                         explored.delete(neighbor);
                     }
                 }
             });
+
             scheduleTimeout(visitNext, delay);
         }
+
         visitNext();
     }
+
 
     function aStar(startId, goalId) {
         stopAlgorithm();
@@ -887,6 +1114,19 @@ document.addEventListener("DOMContentLoaded", function() {
         showLinkWeights();
         isAlgorithmRunning = true;
         currentPath = null;
+
+        // 1) Reset discovery indices & keep a counter
+        nodes.forEach(n => {
+            n.discoveryIndex = undefined;
+        });
+        let discoveredCount = 0;
+
+        // Mark the start node's discoveryIndex
+        const startNodeObj = getNode(startId);
+        if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
+            startNodeObj.discoveryIndex = discoveredCount++;
+        }
+
         const frontier = [{ node: startId, g: 0 }];
         const costs = { [startId]: 0 };
         const parents = {};
@@ -896,50 +1136,89 @@ document.addEventListener("DOMContentLoaded", function() {
         function visitNext() {
             if (!isAlgorithmRunning) return;
             delay = 0;
+
             if (frontier.length === 0) {
                 delayedLog("A*: No path found.", [...expanded]);
                 isAlgorithmRunning = false;
                 return;
             }
-            frontier.sort((a, b) => (a.g + getHeuristic(a.node)) - (b.g + getHeuristic(b.node)));
+
+            // Sort by f = g + h
+            frontier.sort(
+                (a, b) =>
+                    (a.g + getHeuristic(a.node)) - (b.g + getHeuristic(b.node))
+            );
+
             const { node: current, g: currentG } = frontier.shift();
+
+            // If the cost in frontier is worse than our best known cost, skip
             if (currentG > costs[current]) {
                 scheduleTimeout(visitNext, delay);
                 return;
             }
+
             highlightNode(current);
             setNodeCost(current, currentG);
             expanded.add(current);
-            delayedLog(`A*: Expanding node ${current} (f=${(currentG + getHeuristic(current)).toFixed(2)})`, [...expanded]);
+
+            delayedLog(
+                `A*: Expanding node ${current} (f=${(currentG + getHeuristic(current)).toFixed(2)})`,
+                [...expanded]
+            );
+
+            // Goal check
             if (current === goalId) {
                 const path = [current];
-                while (path[0] !== startId) path.unshift(parents[path[0]]);
+                while (path[0] !== startId) {
+                    path.unshift(parents[path[0]]);
+                }
                 currentPath = path;
                 highlightPath(path);
                 delayedLog(`A*: Goal reached! Path: ${path.join(" -> ")}`, [...expanded]);
                 isAlgorithmRunning = false;
                 return;
             }
+
+            // For each neighbor
             adjacency[current]?.forEach(neighbor => {
                 const link = links.find(l => {
                     const s = normalizeEndpoint(l.source);
                     const t = normalizeEndpoint(l.target);
-                    return (s === current && t === neighbor) || (t === current && s === neighbor);
+                    return (
+                        (s === current && t === neighbor) ||
+                        (t === current && s === neighbor)
+                    );
                 });
                 if (!link) return;
+
                 const tentativeG = currentG + link.weight;
                 if (costs[neighbor] === undefined || tentativeG < costs[neighbor]) {
                     costs[neighbor] = tentativeG;
                     parents[neighbor] = current;
+
+                    // 2) Assign discoveryIndex if we haven't before
+                    const nbrNodeObj = getNode(neighbor);
+                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
+                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    }
+
                     frontier.push({ node: neighbor, g: tentativeG });
                     scheduleTimeout(() => displayNodeCost(neighbor, tentativeG), delay - 1);
-                    delayedLog(`A*: Discovered ${neighbor}, g=${tentativeG.toFixed(2)}, f=${(tentativeG + getHeuristic(neighbor)).toFixed(2)}`, [...expanded]);
+
+                    delayedLog(
+                        `A*: Discovered ${neighbor}, g=${tentativeG.toFixed(2)}, ` +
+                        `f=${(tentativeG + getHeuristic(neighbor)).toFixed(2)}`,
+                        [...expanded]
+                    );
                 }
             });
+
             scheduleTimeout(visitNext, delay);
         }
+
         visitNext();
     }
+
 
     function getHeuristic(id) {
         const node = nodes.find(n => n.id === id);
