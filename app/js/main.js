@@ -227,11 +227,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // ───────── Global Force Simulation ─────────
-    const simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.id).distance(100).strength(0.7))
-        .force("charge", d3.forceManyBody().strength(-200))
-        .force("collide", d3.forceCollide(outerRadius + 1))    // Prevent overlaps & enforce boundary
-        .force("center", d3.forceCenter(width/2, height/2))
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(50))
+        .force("charge", d3.forceManyBody().strength(-1000))
+        .force("collide", d3.forceCollide(outerRadius + 1))
+        .force("center", d3.forceCenter(width / 2, height / 2))
         .on("tick", () => {
             updateContainerSize();
             nodes.forEach(constrainNode);
@@ -723,11 +723,8 @@ document.addEventListener("DOMContentLoaded", function() {
         nextId++;
         buildAdjacency();
 
-        // re-assign nodes and links to the force simulation
         simulation.nodes(nodes);
         simulation.force("link").links(links);
-
-// nudge the simulation a bit to “wake it up”
         simulation.alpha(1).restart();
 
         drawGraph();
