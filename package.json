@@ -1,0 +1,26 @@
+{
+  "homepage": "https://github.com/TheUnholyPear/cs408-visualiser.git",
+  "name": "cs408-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && gh-pages -d dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "d3": "^7.9.0",
+    "intro.js": "^7.2.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "live-server": "^1.2.2",
+    "vite": "^6.2.3"
+  }
+}

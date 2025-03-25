@@ -1,0 +1,378 @@
+/* Global settings */
+html, body {
+    overflow: hidden;
+}
+
+/* Navbar positioning */
+.navbar {
+    position: fixed;
+    top: 0;
+    padding: 0;
+    width: 100%;
+    height: 5vh;
+}
+
+/* Main container layout */
+.main-container {
+    margin-top: 5vh;
+    height: 95vh;
+    display: flex;
+    position: relative;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 20vw; /* Default width */
+    min-width: 150px;
+    max-width: 600px;
+    height: 95vh;
+    overflow-y: auto;
+    border-right: 2px solid #ccc;
+    transition: width 0.2s;
+    position: relative; /* Ensures resizer stays aligned */
+}
+
+#sidebarResizer {
+    width: 6px;
+    height: 100vh;
+    cursor: ew-resize;
+    background-color: #aaa;
+    position: relative; /* You can also try absolute if needed */
+    z-index: 10;
+}
+
+#sidebarResizer:hover {
+    background-color: #bbb;
+}
+
+
+/* Main content styling */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+}
+
+.main-content #steps-tab-pane {
+    overflow-y: auto;
+}
+
+/* Tab styling (overriding Bootstrap defaults) */
+.nav-tabs .nav-link {
+    border-radius: 0 !important;
+    box-sizing: border-box;
+    border: none;
+    color: gray;
+}
+
+.nav-tabs .nav-link.active {
+    box-sizing: border-box;
+    background-color: cadetblue;
+    color: #000;
+}
+
+/* Toast customization */
+.toast-container {
+    z-index: 1055;
+}
+
+
+#currentStepToast {
+    background-color: rgba(52, 58, 64, 0.7) !important;
+    color: #fff;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+}
+
+#currentStepToast .toast-header {
+    background-color: rgba(73, 80, 87, 0.5) !important;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+#currentStepToast .toast-body {
+    background-color: transparent !important;
+    font-size: 1rem;
+    padding: 0.75rem;
+}
+
+/* Tab content layout */
+.tab-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.tab-pane {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Graph container styling */
+.graphContainer {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: hidden;
+    background: #e9ecef;
+    height: 100%;
+    width: 100%;
+
+}
+
+/* SVG fills the container */
+#graphSvg {
+    width: 100%;
+    height: 100%;
+}
+
+#searchTreeSvg{
+    width: 100%;
+    height: 100%;
+}
+
+/* Algorithm steps area */
+#algorithmSteps {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 1rem;
+    overflow-y: auto;
+    background: #fff;
+}
+
+#stepsList {
+    list-style-type: none;
+    padding: 0;
+}
+
+#stepsList .step-button {
+    background-color: #20c997;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem 0;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    transition: background-color 0.2s ease-in-out;
+    font-size: 14px;
+}
+
+#stepsList .step-button:hover {
+    background-color: #0f5132;
+}
+
+#stepsList .step-button:disabled {
+    background-color: #ccc;
+    cursor: default;
+    color: #666;
+}
+
+/* Graph node styling */
+.node-group {
+    cursor: move;
+}
+.node-group text.heuristic-label {
+    fill: #d63384;
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+/* Additional node styling for goal highlight */
+.node-group.goal-highlight .outer-circle {
+    fill: #e74c3c !important;
+}
+
+/* Visited = orange */
+.node-group.highlighted .outer-circle {
+    fill: orange !important;
+}
+
+/* Current = green (higher specificity) */
+.node-group.highlighted.current-highlight .outer-circle {
+    fill: green !important;
+}
+
+
+.outer-circle {
+    fill: steelblue;
+}
+
+.inner-circle {
+    fill: white;
+    stroke: #333;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+.activated {
+    fill: limegreen !important;
+}
+
+.label {
+    fill: #333;
+    font-size: 12px;
+    cursor: move;
+}
+
+.link {
+    stroke: #999;
+    stroke-width: 2px;
+}
+
+
+/* Border override for tab content */
+.border-2 {
+    border-width: 5px !important;
+    border-color: cadetblue !important;
+}
+
+/* Final path highlighting */
+/* Nodes on the final path */
+.path-highlight .outer-circle {
+    stroke: #ff5722;
+    stroke-width: 4px;
+}
+
+/* Links along the final path */
+.path-highlight-link {
+    stroke: #ff5722;
+    stroke-width: 4px;
+    stroke-dasharray: 5, 3;
+}
+
+/* Search‑tree “current/visited” highlight */
+#searchTreeSvg .node-group.highlighted .outer-circle {
+    fill: orange !important;
+}
+
+/* Search‑tree goal highlight */
+#searchTreeSvg .node-group.goal-highlight .outer-circle {
+    stroke: green;
+    stroke-width: 3px;
+}
+
+
+/* Custom controls positioning */
+#toggleSidebar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+}
+
+.navControls {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+#speedControls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.speed-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.speed-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.speed-options {
+    display: flex;
+    gap: 10px;
+}
+
+.speed-options label {
+    display: flex;
+    align-items: center;
+}
+
+#traversalButtons {
+    position: absolute;
+    top: 10px; /* adjust as needed */
+    right: 10px;  /* adjust as needed */
+    z-index: 10;
+}
+
+.customTooltip {
+    background-color: #42464a;
+    color: white;
+    padding: 15px;
+}
+
+.introjs-tooltiptext{
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.introjs-skipbutton {
+    color: #9a0000;
+}
+
+#searchTreePanel {
+    flex: 0 0 0;
+    height: 95vh;
+    padding-top: 7vh;
+    padding-bottom: 2vh;
+    overflow: hidden;
+    background: #e9ecef;
+    border-left: none;
+    position: relative;
+}
+
+#searchTreePanel.open {
+    flex: 0 0 50vw;
+    border: 5px solid cadetblue;
+}
+
+#searchTreeStats {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.85);
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 2200;
+    font-size: 0.9rem;
+}
+
+#searchTreeStats p {
+    margin: 2px 0;
+}
+
+
+.tree-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translate(0, -50%);
+    z-index: 2100;
+    padding: .5rem 1rem;
+    border-radius: 4px 0 0 4px;
+    background: #20c997;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+.tree-toggle-btn:hover {
+    background: #17a589;
+}
