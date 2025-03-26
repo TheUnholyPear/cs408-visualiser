@@ -12,6 +12,10 @@ html, body {
     height: 5vh;
 }
 
+.sidebar--hidden {
+    display: none !important;
+}
+
 /* Main container layout */
 .main-container {
     margin-top: 5vh;
@@ -37,9 +41,17 @@ html, body {
     height: 100vh;
     cursor: ew-resize;
     background-color: #aaa;
-    position: relative; /* You can also try absolute if needed */
+    position: relative;
     z-index: 10;
+    user-select: none;
 }
+
+#searchTreePanelSvg {
+    box-sizing: border-box;
+    margin: 16px;
+    overflow: visible;
+}
+
 
 #sidebarResizer:hover {
     background-color: #bbb;
@@ -262,8 +274,10 @@ html, body {
     position: absolute;
     top: 10px;
     left: 10px;
-    z-index: 10;
+    z-index: 9999;
+    pointer-events: auto;
 }
+
 
 .navControls {
     position: absolute;

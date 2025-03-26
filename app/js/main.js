@@ -35,12 +35,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // D3 Setup
     const svg = d3.select("#graphSvg");
-    svg.attr("width", width)
-        .attr("height", height);
+    svg.attr("width", width).attr("height", height);
 
     const linkGroup = svg.append("g").attr("class", "links");
     const nodeGroup = svg.append("g").attr("class", "nodes");
     const labelGroup = svg.append("g").attr("class", "labels");
+
+
 
 
     // Toast initialization for current step
@@ -50,34 +51,25 @@ document.addEventListener("DOMContentLoaded", function() {
         animation: false
     });
 
-    // ───────── Helper Functions ─────────
+    // Global Force Simulation
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(50).strength(0.5))
+        .force("charge", d3.forceManyBody().strength(-500))
+        .force("collide", d3.forceCollide(outerRadius + 1))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .on("tick", () => {
+            updateContainerSize();
+            nodes.forEach(constrainNode);
+            updatePositions();
+        });
 
-    // Helper: Normalize a link endpoint (could be a node object or a number)
-    function normalizeEndpoint(x) {
-        return (typeof x === "object" ? x.id : x);
-    }
-
-    // Helper: wipe node cost labels
-    function wipeCosts() {
-        nodes.forEach(n => { n.cost = undefined; });
-        d3.selectAll(".node-group")
-            .select(".cost-label")
-            .text("");
-    }
-
-    // Helper: wipe links and any weights
-    function wipeLinksAndWeights() {
-        links = [];
-        linkGroup.selectAll(".link").remove();
-        labelGroup.selectAll(".link-label").remove();
-    }
 
     // Draw/redo graph
     let linkSelection, nodeSelection, linkLabelSelection;
     function drawGraph() {
         // LINKS
         linkSelection = linkGroup.selectAll(".link")
-            .data(links, link => `${normalizeEndpoint(link.source)}-${normalizeEndpoint(link.target)}`);
+            .data(links, link => `${link.source.id}-${link.target.id}`);
         linkSelection.exit().remove();
         linkSelection = linkSelection.enter()
             .append("line")
@@ -86,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Link Labels (if weight exists)
         linkLabelSelection = labelGroup.selectAll(".link-label")
-            .data(links.filter(l => l.weight !== undefined), link => `${normalizeEndpoint(link.source)}-${normalizeEndpoint(link.target)}`);
+            .data(links.filter(l => l.weight !== undefined), link => `${link.source.id}-${link.target.id}`);
         linkLabelSelection.exit().remove();
         const linkLabelEntering = linkLabelSelection.enter()
             .append("text")
@@ -188,8 +180,8 @@ document.addEventListener("DOMContentLoaded", function() {
         adjacency = {};
         nodes.forEach(n => adjacency[n.id] = []);
         links.forEach(link => {
-            const s = normalizeEndpoint(link.source);
-            const t = normalizeEndpoint(link.target);
+            const s = link.source.id;
+            const t = link.target.id;
             adjacency[s].push(t);
             adjacency[t].push(s);
         });
@@ -206,13 +198,6 @@ document.addEventListener("DOMContentLoaded", function() {
         d.y = Math.max(outerRadius, Math.min(height - outerRadius, d.y));
     }
 
-    function updateContainerSize() {
-        const rect = svgEl.getBoundingClientRect();
-        width = rect.width;
-        height = rect.height;
-    }
-
-
 
     // ───────── Search‑Tree Functions ─────────
     function buildTreeData(parents, startId) {
@@ -225,18 +210,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         return recurse(startId);
     }
-
-    // ───────── Global Force Simulation ─────────
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(50))
-        .force("charge", d3.forceManyBody().strength(-1000))
-        .force("collide", d3.forceCollide(outerRadius + 1))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .on("tick", () => {
-            updateContainerSize();
-            nodes.forEach(constrainNode);
-            updatePositions();
-        });
 
 
 
@@ -299,13 +272,13 @@ document.addEventListener("DOMContentLoaded", function() {
         for (let i = 0; i < numNodes; i++) {
             for (let j = i + 1; j < numNodes; j++) {
                 // Skip if it's already in linksTemp
-                if (linksTemp.some(l => {
-                    const s = normalizeEndpoint(l.source);
-                    const t = normalizeEndpoint(l.target);
-                    return (s === i && t === j) || (s === j && t === i);
-                })) {
+                if (linksTemp.some(link =>
+                    (link.source === i && link.target === j) ||
+                    (link.source === j && link.target === i)
+                )) {
                     continue;
                 }
+
                 candidateEdges.push({ source: i, target: j });
             }
         }
@@ -357,7 +330,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Done. Now we have a spanning tree plus some random edges,
         // with max deg <= 3, and limited fraction of deg=3 nodes
-        links = linksTemp;
+        links = linksTemp.map(l => ({
+            source: nodes[l.source],
+            target: nodes[l.target],
+            weight: l.weight
+        }));
         nextId = numNodes;
 
         // Update adjacency & force simulation
@@ -407,8 +384,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // 4) Run the tree layout (top to bottom)
         d3.tree()
-            .size([w - 2 * outerRadius, h - 2 * outerRadius])(root);
-
+            .size([w - 2 * outerRadius, h - 3 * outerRadius])(root);
         // Helper functions for bounding x/y to the panel
         const cx = d => Math.max(outerRadius, Math.min(w - outerRadius, d.x + outerRadius));
         const cy = d => Math.max(outerRadius, Math.min(h - outerRadius, d.y + outerRadius));
@@ -495,11 +471,9 @@ document.addEventListener("DOMContentLoaded", function() {
             .text(d => {
                 const parent = d.source.data.id;
                 const child = d.target.data.id;
-                const link = snapshot.links.find(l =>
-                    (normalizeEndpoint(l.source) === parent &&
-                        normalizeEndpoint(l.target) === child) ||
-                    (normalizeEndpoint(l.source) === child &&
-                        normalizeEndpoint(l.target) === parent)
+                const link = snapshot.links.find(link =>
+                    (link.source.id === parent && link.target.id === child) ||
+                    (link.source.id === child && link.target.id === parent)
                 );
                 return link?.weight !== undefined ? link.weight : "";
             });
@@ -654,104 +628,38 @@ document.addEventListener("DOMContentLoaded", function() {
         drawSearchTree(snapshot);
     }
 
-    // ───────── Highlight Helpers ─────────
-    function highlightNode(nodeId) {
-        d3.selectAll(".node-group").classed("current-highlight", false);
-        d3.selectAll(".node-group")
-            .filter(d => d.id === nodeId)
-            .classed("highlighted", true)
-            .classed("current-highlight", true);
-    }
-
-    function clearHighlights() {
-        d3.selectAll(".node-group")
-            .classed("highlighted", false)
-            .classed("path-highlight", false);
-        d3.selectAll(".link")
-            .classed("path-highlight-link", false);
-    }
-
-    function highlightPath(path) {
-        if (!path || path.length === 0) return;
-        path.forEach(nodeId => {
-            d3.selectAll(".node-group")
-                .filter(d => d.id === nodeId)
-                .classed("path-highlight", true);
-        });
-        for (let i = 0; i < path.length - 1; i++) {
-            d3.selectAll(".link")
-                .filter(link => {
-                    let src = normalizeEndpoint(link.source);
-                    let tgt = normalizeEndpoint(link.target);
-                    return (src === path[i] && tgt === path[i + 1]) || (src === path[i + 1] && tgt === path[i]);
-                })
-                .classed("path-highlight-link", true);
+    //----------------------------------------------------------------------------------------------------------- DOWN
+    function updateHeuristics(goalId) {
+        const goal = nodes.find(n => n.id === goalId);
+        if (!goal) return;
+        const minWeight = Math.min(...links.map(l => l.weight ?? Infinity));
+        const hops = {};
+        nodes.forEach(n => hops[n.id] = Infinity);
+        hops[goalId] = 0;
+        const queue = [goalId];
+        while (queue.length) {
+            const u = queue.shift();
+            adjacency[u].forEach(v => {
+                if (hops[v] === Infinity) {
+                    hops[v] = hops[u] + 1;
+                    queue.push(v);
+                }
+            });
         }
-    }
-
-    function clearGoal() {
-        d3.selectAll(".node-group").classed("goal-highlight", false);
-    }
-
-    function highlightGoal(nodeId) {
-        d3.selectAll(".node-group")
-            .filter(d => d.id === nodeId)
-            .classed("goal-highlight", true);
-    }
-
-    function clearCurrent() {
-        d3.selectAll(".node-group").classed("current-highlight", false);
-    }
-
-    function highlightCurrent(nodeId) {
-        d3.selectAll(".node-group")
-            .filter(d => d.id === nodeId)
-            .classed("current-highlight", true);
-    }
-
-    // ───────── Add and Delete Node Helpers ─────────
-    function addNode(parentIds) {
-        const newNode = {
-            id: nextId,
-            x: Math.random() * (width - 2 * outerRadius) + outerRadius,
-            y: Math.random() * (height - 2 * outerRadius) + outerRadius
-        };
-        nodes.push(newNode);
-        parentIds.forEach(pid => {
-            links.push({ source: pid, target: newNode.id, weight: undefined });
+        nodes.forEach(n => {
+            n.h = Number.isFinite(hops[n.id]) ? hops[n.id] * minWeight : 0;
+            d3.selectAll(".node-group")
+                .filter(d => d.id === n.id)
+                .select(".heuristic-label")
+                .text(`H: ${n.h}`);
         });
-        nextId++;
-        buildAdjacency();
-
-        simulation.nodes(nodes);
-        simulation.force("link").links(links);
-        simulation.alpha(1).restart();
-
-        drawGraph();
-        updateGoalNodeSelect();
-    }
-    function deleteNode(nodeId) {
-        // Remove the node and its links
-        nodes = nodes.filter(n => n.id !== nodeId);
-        links = links.filter(l => {
-            const s = normalizeEndpoint(l.source);
-            const t = normalizeEndpoint(l.target);
-            return s !== nodeId && t !== nodeId;
-        });
-
-        // Rebuild adjacency
-        buildAdjacency();
-
-        // Update and restart the force simulation with the new arrays
-        simulation.nodes(nodes);
-        simulation.force("link").links(links);
-        simulation.alpha(1).restart();
-
-        // Finally, redraw
         drawGraph();
     }
+    //----------------------------------------------------------------------------------------------------------- UP
 
-    // ───────── Update Select Elements ─────────
+    // ───────── Helper Functions ─────────
+
+    // Update Select Elements
     const startNodeSelect = document.getElementById("startNodeSelect");
     const node1Select = document.getElementById("node1Select");
     const node2Select = document.getElementById("node2Select");
@@ -794,11 +702,158 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    // Highlight Helpers
+    function highlightNode(nodeId) {
+        d3.selectAll(".node-group").classed("current-highlight", false);
+        d3.selectAll(".node-group")
+            .filter(d => d.id === nodeId)
+            .classed("highlighted", true)
+            .classed("current-highlight", true);
+    }
+
+    function clearHighlights() {
+        d3.selectAll(".node-group")
+            .classed("highlighted", false)
+            .classed("path-highlight", false);
+        d3.selectAll(".link")
+            .classed("path-highlight-link", false);
+    }
+
+    function highlightPath(path) {
+        if (!path || path.length === 0) return;
+        path.forEach(nodeId => {
+            d3.selectAll(".node-group")
+                .filter(d => d.id === nodeId)
+                .classed("path-highlight", true);
+        });
+        for (let i = 0; i < path.length - 1; i++) {
+            d3.selectAll(".link")
+                .filter(link => {
+                    let s = link.source.id;
+                    let t = link.target.id;
+                    return (s === path[i] && t === path[i + 1]) || (s === path[i + 1] && t === path[i]);
+                })
+                .classed("path-highlight-link", true);
+        }
+    }
+
+    function clearGoal() {
+        d3.selectAll(".node-group").classed("goal-highlight", false);
+    }
+
+    function highlightGoal(nodeId) {
+        d3.selectAll(".node-group")
+            .filter(d => d.id === nodeId)
+            .classed("goal-highlight", true);
+    }
+
+    function addNode(parentIds) {
+        const newNode = {
+            id: nextId,
+            x: Math.random() * (width - 2 * outerRadius) + outerRadius,
+            y: Math.random() * (height - 2 * outerRadius) + outerRadius
+        };
+        nodes.push(newNode);
+        parentIds.forEach(pid => {
+            links.push({ source: nodes[pid], target: newNode, weight: undefined });
+        });
+        nextId++;
+        buildAdjacency();
+
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
+        simulation.alpha(1).restart();
+
+        drawGraph();
+        updateGoalNodeSelect();
+    }
+    function deleteNode(nodeId) {
+        // Remove the node and its links
+        nodes = nodes.filter(n => n.id !== nodeId);
+        links = links.filter(link => {
+            const s = link.source.id;
+            const t = link.target.id;
+            return s !== nodeId && t !== nodeId;
+        });
+
+        // Rebuild adjacency
+        buildAdjacency();
+
+        // Update and restart the force simulation with the new arrays
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
+        simulation.alpha(1).restart();
+
+        // Finally, redraw
+        drawGraph();
+    }
+
+    function getHeuristic(id) {
+        const node = nodes.find(n => n.id === id);
+        return node?.h ?? 0;
+    }
+
+    function showLinkWeights() {
+        updateWeightsVisibility(true);
+    }
+    function hideLinkWeights() {
+        updateWeightsVisibility(false);
+    }
+
+    function showHeuristics() {
+        d3.selectAll(".heuristic-label").style("display", "block");
+        document.getElementById("toggleHeuristicSwitch").checked = true;
+    }
+
+    function hideHeuristics() {
+        d3.selectAll(".heuristic-label").style("display", "none");
+        document.getElementById("toggleHeuristicSwitch").checked = false;
+    }
+
+    function updateHeuristicVisibility(show) {
+        if (show) showHeuristics();
+        else hideHeuristics();
+    }
+
+
+    // Helper: wipe node cost labels
+    function wipeCosts() {
+        nodes.forEach(n => { n.cost = undefined; });
+        d3.selectAll(".node-group")
+            .select(".cost-label")
+            .text("");
+    }
+
+    function wipeLinksAndWeights() {
+        links = [];
+        linkGroup.selectAll(".link").remove();
+        labelGroup.selectAll(".link-label").remove();
+    }
+
+    function updateContainerSize() {
+        const size = svgEl.getBoundingClientRect();
+        width = size.width;
+        height = size.height;
+    }
+
+    function resizeGraph() {
+        updateContainerSize();
+        svg.attr("width", width).attr("height", height);
+
+        simulation.force("center", d3.forceCenter(width/2, height/2))
+            .alpha(0.5).restart();
+
+        nodes.forEach(constrainNode);
+        updatePositions();
+    }
+
+
     // ───────── Algorithms (BFS, DFS, UCS, A*) ─────────
     function bfs(startId, goalId) {
         stopAlgorithm();
         clearSteps();
         hideLinkWeights();
+        hideHeuristics()
         isAlgorithmRunning = true;
         currentPath = null;
 
@@ -881,6 +936,7 @@ document.addEventListener("DOMContentLoaded", function() {
         stopAlgorithm();
         clearSteps();
         hideLinkWeights();
+        hideHeuristics()
         isAlgorithmRunning = true;
         currentPath = null;
 
@@ -979,6 +1035,7 @@ document.addEventListener("DOMContentLoaded", function() {
         stopAlgorithm();
         clearSteps();
         showLinkWeights();
+        hideHeuristics()
         isAlgorithmRunning = true;
         currentPath = null;
 
@@ -1060,9 +1117,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // Expand neighbors
             (adjacency[current] || []).forEach(neighbor => {
-                let link = links.find(l => {
-                    const s = normalizeEndpoint(l.source);
-                    const t = normalizeEndpoint(l.target);
+                let link = links.find(link => {
+                    const s = link.source.id;
+                    const t = link.target.id;
                     return (
                         (s === current && t === neighbor) ||
                         (t === current && s === neighbor)
@@ -1106,9 +1163,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
     function aStar(startId, goalId) {
+        if (isNaN(goalId)) {
+            alert("Please select a goal node before running A*.");
+            return;
+        }
         stopAlgorithm();
         clearSteps();
         showLinkWeights();
+        showHeuristics()
         isAlgorithmRunning = true;
         currentPath = null;
 
@@ -1178,9 +1240,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // For each neighbor
             adjacency[current]?.forEach(neighbor => {
-                const link = links.find(l => {
-                    const s = normalizeEndpoint(l.source);
-                    const t = normalizeEndpoint(l.target);
+                const link = links.find(link => {
+                    const s = link.source.id;
+                    const t = link.target.id;
                     return (
                         (s === current && t === neighbor) ||
                         (t === current && s === neighbor)
@@ -1216,16 +1278,11 @@ document.addEventListener("DOMContentLoaded", function() {
         visitNext();
     }
 
-
-    function getHeuristic(id) {
-        const node = nodes.find(n => n.id === id);
-        return node?.h ?? 0;
-    }
-
     // ───────── Event Listeners ─────────
-    const generateForm = document.getElementById("generateGraphForm");
+
+    // Generate Graph Events
     const nodeCountInput = document.getElementById("nodeCountInput");
-    generateForm.addEventListener("submit", (e) => {
+    document.getElementById("generateGraphForm").addEventListener("submit", (e) => {
         stopAlgorithm();
         clearSteps();
         clearGoal();
@@ -1236,84 +1293,90 @@ document.addEventListener("DOMContentLoaded", function() {
         nodeCountInput.value = "";
     });
 
-    document.getElementById("tutorialBtn").addEventListener("click", function() {
+    document.getElementById("tutorialBtn").addEventListener("click", () => {
         introJs().setOptions({
             steps: [
                 {
-                    element: document.querySelector("#generateGraphForm"),
-                    intro: "Use this form to generate a new graph by specifying the number of nodes and weight options.",
+                    element: "#generateGraphForm",
+                    intro: "Enter how many nodes you want and click Generate to build a new random graph.",
                     position: "right"
                 },
                 {
-                    element: document.querySelector("#weightDiv"),
-                    intro: "Toggle this switch to show or hide edge weights on the graph.",
+                    element: "#weightDiv",
+                    intro: "Toggle this to show or hide edge weights on the graph.",
                     position: "right"
                 },
                 {
-                    element: document.querySelector("#AddNodeDiv"),
-                    intro: "Here is where you can add or delete a node. Make sure to activate a parent node by clicking its inner circle first.",
+                    element: "#heuristicToggleDiv",
+                    intro: "Toggle heuristics (h‑values) on each node — useful for A* search.",
                     position: "right"
                 },
                 {
-                    element: document.querySelector("#updateLinkForm"),
-                    intro: "Update the link weight between two nodes using these controls.",
+                    element: "#AddNodeDiv",
+                    intro: "Click Add or Delete to modify nodes. Activate a parent by clicking its inner circle first.",
+                    position: "right"
+                },
+                {
+                    element: "#updateLinkForm",
+                    intro: "Use these controls to create, update, or remove an edge between two nodes.",
                     position: "top"
                 },
                 {
-                    element: document.querySelector("#selectGoalDiv"),
-                    intro: "Select your goal node from the dropdown.",
+                    element: "#selectStartDiv",
+                    intro: "Choose your starting node for all searches.",
                     position: "top"
                 },
                 {
-                    element: document.querySelector("#selectStartDiv"),
-                    intro: "Choose your starting node for algorithm traversal here.",
+                    element: "#selectGoalDiv",
+                    intro: "Choose your goal node (or click Set Random Goal).",
                     position: "top"
                 },
                 {
-                    element: document.querySelector("#resetDiv"),
-                    intro: "Click this button to reset the graph and clear the algorithm history.",
-                    position: "top"
-                },
-                {
-                    element: document.querySelector("#toggleSidebar"),
-                    intro: "Click here to hide or show the sidebar.",
-                    position: "left"
-                },
-                {
-                    element: document.querySelector("#algorithmDropdown"),
-                    intro: "Select an algorithm (BFS, DFS, UCS, etc.) from this dropdown.",
+                    element: "#algorithmDropdown",
+                    intro: "Pick a search algorithm (BFS, DFS, UCS, or A*).",
                     position: "bottom"
                 },
                 {
-                    element: document.querySelector("#runAlgorithmBtn"),
-                    intro: "Click here to run the selected algorithm and see the traversal animation.",
-                    position: "left"
-                },
-                {
-                    element: document.querySelector("#backStep"),
-                    intro: "Use this button to go back one step in the algorithm history.",
-                    position: "top"
-                },
-                {
-                    element: document.querySelector("#forwardStep"),
-                    intro: "Use this button to move forward one step in the algorithm history.",
-                    position: "top"
-                },
-                {
-                    element: document.querySelector("#speedControls"),
-                    intro: "Adjust the speed of the algorithm traversal using these radio buttons.",
-                    position: "top"
-                },
-                {
-                    element: document.querySelector(".nav-tabs"),
-                    intro: "Switch between the Graph view and the History view using these tabs.",
+                    element: "#runAlgorithmBtn",
+                    intro: "Run the selected algorithm — watch the traversal animate!",
                     position: "bottom"
                 },
                 {
-                    element: document.querySelector("#mainGraph"),
-                    intro: "This is your graph area where the generated graph is displayed. You can interact with the graph here.",
+                    element: "#speedControls",
+                    intro: "Adjust how fast each step of the algorithm plays.",
                     position: "top"
-                }
+                },
+                {
+                    element: ".backStep",
+                    intro: "Step backwards through the algorithm history.",
+                    position: "top"
+                },
+                {
+                    element: ".forwardStep",
+                    intro: "Step forwards through the algorithm history.",
+                    position: "top"
+                },
+                {
+                    element: "#toggleSidebar",
+                    intro: "Hide or show the sidebar to give more room to the graph.",
+                    position: "left"
+                },
+                {
+                    element: "#toggleTreeBtn",
+                    intro: "Open the Search Tree panel to see the traversal tree.",
+                    position: "left"
+                },
+                {
+                    element: "#mainGraph",
+                    intro: "This is the interactive graph area — drag nodes around or click them to activate.",
+                    position: "top"
+                },
+                {
+                    element: "#searchTreePanel",
+                    intro: "This is the Search Tree panel — it visualizes the traversal tree and shows stats about nodes expanded, discovered, depth, cost, etc.",
+                    position: "left"
+                },
+
             ],
             showStepNumbers: true,
             exitOnOverlayClick: true,
@@ -1326,8 +1389,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }).start();
     });
 
-    const addNodeForm = document.getElementById("addNodeForm");
-    addNodeForm.addEventListener("submit", (e) => {
+
+    // addNode Event
+    document.getElementById("addNodeForm").addEventListener("submit", (e) => {
         stopAlgorithm();
         clearSteps();
         e.preventDefault();
@@ -1341,8 +1405,8 @@ document.addEventListener("DOMContentLoaded", function() {
         d3.selectAll(".inner-circle").classed("activated", false);
     });
 
-    const deleteNodeForm = document.getElementById("deleteNodeForm");
-    deleteNodeForm.addEventListener("submit", (e) => {
+    // deleteNode Event
+    document.getElementById("deleteNodeForm").addEventListener("submit", (e) => {
         stopAlgorithm();
         clearSteps();
         e.preventDefault();
@@ -1359,22 +1423,15 @@ document.addEventListener("DOMContentLoaded", function() {
         d3.selectAll(".inner-circle").classed("activated", false);
     });
 
-    const goalNodeSelect = document.getElementById("goalNodeSelect");
-    goalNodeSelect.addEventListener("change", () => {
-        clearGoal();
-        const goalId = parseInt(goalNodeSelect.value, 10);
-        highlightGoal(goalId);
-    });
-
+    // Speed Slider Events
     const slider = document.getElementById("speedSlider");
-    const speedValue = document.getElementById("speedValue");
     let stepDelay = parseInt(slider.value, 10);
     slider.addEventListener("input", function () {
         stepDelay = parseInt(slider.value, 10);
     });
 
-    const clearBtn = document.getElementById("restartBtn");
-    clearBtn.addEventListener("click", () => {
+    // resetButton
+    document.getElementById("restartBtn").addEventListener("click", () => {
         stopAlgorithm();
         clearSteps();
         clearGoal();
@@ -1382,8 +1439,16 @@ document.addEventListener("DOMContentLoaded", function() {
         clearSearchTree();
     });
 
-    const randomGoalBtn = document.getElementById("randomGoalBtn");
-    randomGoalBtn.addEventListener("click", () => {
+    // Select Goal Node Event
+    const goalNodeSelect = document.getElementById("goalNodeSelect");
+    goalNodeSelect.addEventListener("change", () => {
+        clearGoal();
+        const goalId = parseInt(goalNodeSelect.value, 10);
+        highlightGoal(goalId);
+    });
+
+    // Random Goal Button
+    document.getElementById("randomGoalBtn").addEventListener("click", () => {
         clearGoal();
         if (nodes.length === 0) return;
         const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
@@ -1394,10 +1459,10 @@ document.addEventListener("DOMContentLoaded", function() {
         alert(`Randomly selected goal: ${randomNode.id}`);
     });
 
-    document.getElementById("toggleHeuristicSwitch").addEventListener("change", function() {
-        d3.selectAll(".heuristic-label").style("display", this.checked ? "block" : "none");
-    });
-
+    // Hide Heuristic
+    document.getElementById("toggleHeuristicSwitch")
+        .addEventListener("change", e => updateHeuristicVisibility(e.target.checked));
+    // Navigation Events
     document.querySelectorAll('.backStep').forEach(btn =>
         btn.addEventListener('click', () => {
             if (currentStepIndex > 0) {
@@ -1406,7 +1471,6 @@ document.addEventListener("DOMContentLoaded", function() {
             } else alert("No previous step available.");
         })
     );
-
     document.querySelectorAll('.forwardStep').forEach(btn =>
         btn.addEventListener('click', () => {
             if (currentStepIndex < historySteps.length - 1) {
@@ -1416,6 +1480,7 @@ document.addEventListener("DOMContentLoaded", function() {
         })
     );
 
+    // Choose Algorythm Dropdown Event
     document.getElementById('runAlgorithmBtn').addEventListener('click', function() {
         const startId = parseInt(document.getElementById("startNodeSelect").value, 10);
         const goalId = parseInt(document.getElementById("goalNodeSelect").value, 10);
@@ -1437,26 +1502,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Update link dropdowns
-    function updateLinkSelects() {
-        const node1Select = document.getElementById("node1Select");
-        const node2Select = document.getElementById("node2Select");
-        node1Select.innerHTML = "";
-        node2Select.innerHTML = "";
-        nodes.forEach(n => {
-            const opt1 = document.createElement("option");
-            opt1.value = n.id;
-            opt1.textContent = n.id;
-            node1Select.appendChild(opt1);
-            const opt2 = document.createElement("option");
-            opt2.value = n.id;
-            opt2.textContent = n.id;
-            node2Select.appendChild(opt2);
-        });
-    }
-    updateLinkSelects();
-
-    // Update Link Weight
+    // Update Link Weight Event
     document.getElementById("updateLinkBtn").addEventListener("click", function() {
         const node1 = parseInt(document.getElementById("node1Select").value, 10);
         const node2 = parseInt(document.getElementById("node2Select").value, 10);
@@ -1470,8 +1516,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         let linkFound = false;
         links.forEach(link => {
-            const s = normalizeEndpoint(link.source);
-            const t = normalizeEndpoint(link.target);
+            const s = link.source.id;
+            const t = link.target.id;
             if ((s === node1 && t === node2) || (s === node2 && t === node1)) {
                 link.weight = newWeight;
                 linkFound = true;
@@ -1479,7 +1525,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         if (linkFound) {
             const updatedLabels = labelGroup.selectAll(".link-label")
-                .data(links.filter(l => l.weight !== undefined), link => `${normalizeEndpoint(link.source)}-${normalizeEndpoint(link.target)}`);
+                .data(links.filter(l => l.weight !== undefined), link => `${link.source.id}-${link.target.id}`);
             updatedLabels.exit().remove();
             updatedLabels.enter()
                 .append("text")
@@ -1494,22 +1540,22 @@ document.addEventListener("DOMContentLoaded", function() {
             drawGraph();
             alert("Link weight updated.");
         } else {
-            links.push({ source: node1, target: node2, weight: newWeight });
+            links.push({ source: nodes[node1], target: nodes[node2], weight: newWeight });
             buildAdjacency();
             drawGraph();
             alert("Link did not exist, so it was created.");
         }
     });
 
-    // Remove Link
+    // Remove Link Event
     document.getElementById("removeLinkBtn").addEventListener("click", () => {
         stopAlgorithm();
         clearSteps();
         const node1 = parseInt(document.getElementById("node1Select").value, 10);
         const node2 = parseInt(document.getElementById("node2Select").value, 10);
-        const idx = links.findIndex(l => {
-            const s = normalizeEndpoint(l.source);
-            const t = normalizeEndpoint(l.target);
+        const idx = links.findIndex(link => {
+            const s = link.source.id;
+            const t = link.target.id;
             return (s === node1 && t === node2) || (s === node2 && t === node1);
         });
         if (idx !== -1) {
@@ -1522,58 +1568,133 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+
+    // Explanation Event
     document.getElementById('getInfoBtn').addEventListener('click', () => {
         let html = "";
+
         switch (selectedAlgorithm) {
             case "bfs":
                 html = `
-        <h3>Breadth‑First Search (BFS)</h3>
-        <p>BFS explores the graph one “layer” at a time, starting from the start node. It uses a queue to visit every neighbor of the current node before moving deeper. Because it visits all nodes at distance 1, then distance 2, etc., BFS always finds the shortest path in an unweighted graph.</p>
-      `;
+            <h3>Breadth‑First Search (BFS)</h3>
+            <p><strong>Description:</strong> 
+            BFS explores the graph level by level, starting from the source node. It first visits all the neighbors of the source, then moves on to the neighbors of the neighbors, and so on. This guarantees that the first time a node is encountered, it's via the shortest possible path in terms of the number of edges. BFS is particularly useful for finding the shortest path in an unweighted graph, as it always explores all possible paths at the current depth before moving to the next level.</p>
+            
+            <img src="${import.meta.env.BASE_URL}assets/BFS.png" alt="BFS illustration" width="300">
+            
+            <p><strong>Example:</strong> Consider a graph with nodes 1, 2, 3, and 4:
+            Graph: 0 → 1, 0 → 2, 1 → 3
+            
+            Starting from node 0:
+            - First, BFS explores nodes 1 and 2 (since they are at the same level from 0).
+            - Then it moves on to node 3, visiting 1 → 3.
+            
+            The order of visits would be: 0 → 1, 0 → 2, 1 → 3.
+            </p>
+                        `;
                 break;
+
             case "dfs":
                 html = `
-        <h3>Depth‑First Search (DFS)</h3>
-        <p>DFS dives as far as possible down one path before backtracking. It uses a stack (either explicitly or via recursion) so the most recently discovered node is visited next. DFS is memory‑efficient but does not guarantee the shortest path.</p>
-      `;
+                <h3>Depth‑First Search (DFS)</h3>
+                <p><strong>Description:</strong> 
+                DFS is a traversal algorithm that explores as far along a branch as possible before backtracking. It uses a stack (either implicitly via recursion or explicitly) to keep track of which nodes to visit next. DFS doesn't guarantee finding the shortest path, as it may explore deep branches that aren't the most efficient way to reach the goal. It can be useful for exploring all possible paths or when you need to visit all nodes.</p>
+                
+               <img src="${import.meta.env.BASE_URL}assets/DFS.png" alt="DFS illustration" width="300">
+
+
+                
+                <p><strong>Example:</strong> In the same graph as BFS:
+                Graph: 0 → 1, 0 → 2, 1 → 3, 2 → 3
+                
+                If DFS starts at node 0, it may explore:
+                - First, it goes from 0 → 1 → 3 (going deep along the branch).
+                - After backtracking to 0, it then visits 2 → 3.
+                
+                The order of visits could be: 0 → 1 → 3 → 2 → 3.
+                </p>
+                        `;
                 break;
+
             case "ucs":
                 html = `
-        <h3>Uniform Cost Search (UCS)</h3>
-        <p>UCS works like BFS but for weighted graphs. It always expands the node with the lowest total cost from the start, using a priority queue. This guarantees it finds the least‑cost path.</p>
-      `;
+                <h3>Uniform Cost Search (UCS)</h3>
+                <p><strong>Description:</strong> 
+                UCS is similar to BFS but differs in that it takes edge costs into account. It always expands the node with the lowest total cost first. This ensures that the search explores paths with the least cumulative cost, rather than the shortest number of edges as in BFS. UCS is ideal when you want to find the least-cost path in a weighted graph.</p>
+                
+                <img src="${import.meta.env.BASE_URL}assets/UCS.png" alt="UCS illustration" width="300">
+
+
+                
+                <p><strong>Example:</strong> Consider a graph with the following edge costs:
+                Graph: 0 → 1 (cost 1), 0 → 2 (cost 5), 1 → 3 (cost 5), 2 → 3 (cost 2)
+                
+                If UCS starts from node 0:
+                - UCS would first explore 0 → 1 (cost 1), then move on to 0 → 2 (cost 5).
+                - Next, UCS would explore 1 → 3 (cost 6 total) and 2 → 3 (cost 7 total).
+                - The optimal path is 0 → 1 → 3 (cost 6) rather than 0 → 2 → 3 (cost 7).
+                
+                The order of visits would be: 0 → 1 → 3 → 2.
+                </p>
+                        `;
                 break;
+
             case "aStar":
                 html = `
-        <h3>A* Search</h3>
-        <p>A* combines UCS’s cost‑so‑far with an estimate (heuristic) of remaining cost to the goal. It selects the next node based on the sum of those two values, guiding the search more directly toward the goal while still guaranteeing optimality if the heuristic is admissible.</p>
-      `;
+                <h3>A* Search</h3>
+                <p><strong>Description:</strong> 
+                A* is a more advanced search algorithm that combines path cost and a heuristic estimate of the remaining distance to the goal. It evaluates nodes based on both the actual cost to reach the node and the estimated cost from the node to the goal, making it more efficient than UCS and BFS in many cases. A* is optimal and complete, meaning it will find the shortest path if one exists, as long as the heuristic is admissible (i.e., it doesn't overestimate the cost to the goal).</p>
+                
+                <img src="${import.meta.env.BASE_URL}assets/ASTAR.png" alt="ASTAR illustration" width="300">
+                
+                <p><strong>Example:</strong> Consider a graph with the following edges and heuristic values (straight-line distance to goal D):
+                Graph: 0 → 1 (cost 1), 0 → 2 (cost 5), 1 → 3 (cost 5), 2 → 3 (cost 2)
+                Heuristic: h(0) = 3, h(1) = 1, h(2) = 4, h(3) = 0
+                
+                Starting from node A:
+                - A* first evaluates the node with the smallest sum of path cost and heuristic (0 → 1 + h(1) = 1 + 1 = 2).
+                - Then it moves to 1 → 3 (cost 6 total).
+                - Despite 0 → 2 being cheaper in terms of path cost, A* prefers 0 → 1 → 3 because its heuristic suggests 3 is closer via 1.
+                
+                The order of visits would be: 0 → 2 → 3.
+                </p>
+                      `;
                 break;
+
             default:
                 html = `<p>Please select an algorithm from the dropdown to see information.</p>`;
         }
+
         document.getElementById('algInfoContent').innerHTML = html;
-        const modalEl = document.getElementById('algInfoModal');
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
+        new bootstrap.Modal(document.getElementById('algInfoModal')).show();
     });
 
-    function updateWeightsVisibility(visible) {
-        d3.selectAll(".link-label").style("display", visible ? "block" : "none");
-        const toggleSwitch = document.getElementById("toggleWeightsSwitch");
-        toggleSwitch.checked = visible;
-        toggleSwitch.nextElementSibling.textContent = visible ? "Show Weights" : "Hide Weights";
+
+    function updateWeightsVisibility(show) {
+        const graphLabels = d3.selectAll(".link-label");
+        const treeLabels = d3.selectAll("#searchTreePanelSvg .link-weight-label");
+        const toggle = document.getElementById("toggleWeightsSwitch");
+
+        if (show) {
+            graphLabels.style("display", "block");
+            treeLabels.style("display", "block");
+            toggle.checked = true;
+            toggle.nextElementSibling.textContent = "Hide Weights";
+        } else {
+            graphLabels.style("display", "none");
+            treeLabels.style("display", "none");
+            toggle.checked = false;
+            toggle.nextElementSibling.textContent = "Show Weights";
+        }
     }
 
-    document.getElementById("toggleWeightsSwitch").addEventListener("change", function() {
-        updateWeightsVisibility(this.checked);
-        d3.selectAll("#searchTreePanelSvg .link-weight-label")
-            .style("display", this.checked ? "block" : "none");
-    });
+    document.getElementById("toggleWeightsSwitch")
+        .addEventListener("change", (event) => {
+            updateWeightsVisibility(event.target.checked);
+        });
 
-    function showLinkWeights() { updateWeightsVisibility(true); }
-    function hideLinkWeights() { updateWeightsVisibility(false); }
 
+    // -------------------- unsure
     document.getElementById("graph-tab").addEventListener("shown.bs.tab", () => {
         width = svgEl.clientWidth;
         height = svgEl.clientHeight;
@@ -1582,93 +1703,111 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
+        item.addEventListener('click', function(event) {
+            event.preventDefault();
             selectedAlgorithm = this.getAttribute('data-algorithm');
             document.getElementById('algorithmDropdown').innerText = this.innerText;
         });
     });
 
-    const toggleButton = document.getElementById("toggleSidebar");
-    const sidebar = document.getElementById("sidebar");
-    const resizer = document.getElementById("sidebarResizer");
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    toggleButton.addEventListener("click", () => {
-        const isHidden = getComputedStyle(sidebar).display === "none";
-
-        sidebar.style.display = isHidden ? "block" : "none";
-        resizer.style.display = isHidden ? "block" : "none";
-        toggleButton.textContent = isHidden ? "Hide Sidebar" : "Show Sidebar";
-
-        // Immediately recalc size & redraw graph
-        resizeGraph();
-    });
-
-
+    // Sidebar Events
     const mainContainer = document.querySelector(".main-container");
-    let isResizing = false;
-    resizer.addEventListener("mousedown", function (e) { isResizing = true; });
-    document.addEventListener("mousemove", function (e) {
-        if (!isResizing) return;
-        const containerOffset = mainContainer.getBoundingClientRect().left;
-        let newWidth = e.clientX - containerOffset;
-        newWidth = Math.max(150, Math.min(newWidth, 600));
-        sidebar.style.width = `${newWidth}px`;
+    const sidebar = document.getElementById("sidebar");
+
+    const toggleButton = document.getElementById("toggleSidebar");
+    toggleButton.addEventListener("click", () => {
+        sidebar.classList.toggle("sidebar--hidden");
+        resizer.classList.toggle("sidebar--hidden");
+        toggleButton.textContent = sidebar.classList.contains("sidebar--hidden")
+            ? "Show Sidebar"
+            : "Hide Sidebar";
         resizeGraph();
     });
-    document.addEventListener("mouseup", function () { isResizing = false; });
-    generateRandomGraph(5);
 
-    const panel = document.getElementById('searchTreePanel');
-    const toggleBtn = document.getElementById('toggleTreeBtn');
-    toggleBtn.addEventListener('click', () => {
-        const panelOpen = panel.classList.toggle('open');
-        toggleBtn.textContent = panelOpen ? '◀' : '▶';
-        sidebar.style.display = panelOpen ? 'none' : 'block';
-        resizer.style.display = panelOpen ? 'none' : 'block';
-        document.querySelector('.main-content').classList.toggle('shift', panelOpen);
-        drawGraph();
-        setTimeout(resizeGraph, 0);
-        const currentSnapshot = historySteps[currentStepIndex]?.snapshot;
-        if (currentSnapshot) {
-            setTimeout(() => drawSearchTree(currentSnapshot), 0);
-        }
+    const resizer = document.getElementById("sidebarResizer");
+    resizer.addEventListener("pointerdown", () => {
+        document.addEventListener("pointermove", doResize);
+        document.addEventListener("pointerup", stopResize, { once: true });
     });
 
+    let frame;
+    function doResize(event) {
+        if (frame) {
+            cancelAnimationFrame(frame);
+        }
+        frame = requestAnimationFrame(() => {
+            const left = mainContainer.getBoundingClientRect().left;
+            let widthPx = event.clientX - left;
+
+            widthPx = Math.max(150, Math.min(widthPx, 600));
+            sidebar.style.width = `${widthPx}px`;
+            resizeGraph();
+        });
+    }
+
+    function stopResize() {
+        document.removeEventListener("pointermove", doResize);
+    }
+
+    // Toast Events
     const toggleToastSwitch = document.getElementById("toggleToastSwitch");
     const toastContainer = document.getElementById("currentStepToast").parentElement;
     toggleToastSwitch.addEventListener("change", function() {
         toastContainer.style.display = this.checked ? "block" : "none";
     });
 
-    function resizeGraph() {
-        updateContainerSize();
-        svg.attr("width", width).attr("height", height);
-        simulation.force("center", d3.forceCenter(width/2, height/2))
-            .alpha(0.5).restart();
-        nodes.forEach(constrainNode);
-        updatePositions();
-    }
+    // SearchTree Events
+    const panel = document.getElementById('searchTreePanel');
+    const toggleBtn = document.getElementById('toggleTreeBtn');
+    toggleBtn.addEventListener('click', () => {
+        const panelOpen = panel.classList.toggle('open');
 
+        toggleBtn.textContent = panelOpen ? '◀' : '▶';
+        if (panelOpen) {
+            sidebar.classList.add('sidebar--hidden');
+            resizer.classList.add('sidebar--hidden');
+        } else {
+            sidebar.classList.remove('sidebar--hidden');
+            resizer.classList.remove('sidebar--hidden');
+        }
 
+        document.querySelector('.main-content').classList.toggle('shift', panelOpen);
+        drawGraph();
+        resizeGraph();
+
+        const currentSnapshot = historySteps[currentStepIndex]?.snapshot;
+        if (currentSnapshot) {
+            drawSearchTree(currentSnapshot);
+        }
+    });
+
+    // SearchTree Stats Events
     function updateSearchTreeStats(snapshot) {
-        const statsDiv = document.getElementById("searchTreeStats");
-        if (!snapshot) { statsDiv.style.display = "none"; return; }
+        const statsDiv = document.getElementById("searchTreeStats")
+        if (!snapshot) {
+            statsDiv.style.display = "none"; return;
+        }
         statsDiv.style.display = "block";
-        document.getElementById("nodesExpanded").textContent = snapshot.expanded?.length ?? 0;
+
+        const start = Number(document.getElementById("startNodeSelect").value);
         const discovered = Object.keys(snapshot.parents).map(Number);
-        const start = +document.getElementById("startNodeSelect").value;
         const uniqueDiscovered = new Set(discovered.concat(start));
-        document.getElementById("nodesDiscovered").textContent = uniqueDiscovered.size;
         const steps = snapshot.path ? snapshot.path.length - 1 : "N/A";
+
+        document.getElementById("nodesExpanded").textContent = String(snapshot.expanded?.length ?? 0)
+        document.getElementById("nodesDiscovered").textContent = String(uniqueDiscovered.size);
         document.getElementById("stepsToGoal").textContent = steps;
-        if (snapshot.path?.length) {
-            const goalId = +snapshot.goal;
-            const goalNode = snapshot.nodes.find(n => n.id === goalId);
+
+        if (snapshot.path?.length > 0) {
+            const goalId = Number(snapshot.goal);
+            const goalNode = snapshot.nodes.find(node => node.id === goalId);
             document.getElementById("finalCost").textContent = goalNode?.cost ?? "N/A";
         } else {
             document.getElementById("finalCost").textContent = "N/A";
         }
+
         let depth = "N/A";
         if (snapshot.currentNode != null) {
             depth = 0;
@@ -1681,51 +1820,24 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("currentDepth").textContent = depth;
     }
 
+    // Goal Events
     document.getElementById("goalNodeSelect").addEventListener("change", () => {
         clearGoal();
         const goalId = parseInt(goalNodeSelect.value, 10);
-        if (isNaN(goalId)) return;
+
+        if (isNaN(goalId)) {
+            return;
+        }
         highlightGoal(goalId);
         updateHeuristics(goalId);
     });
 
-    function updateHeuristics(goalId) {
-        const goal = nodes.find(n => n.id === goalId);
-        if (!goal) return;
-        const minWeight = Math.min(...links.map(l => l.weight ?? Infinity));
-        const hops = {};
-        nodes.forEach(n => hops[n.id] = Infinity);
-        hops[goalId] = 0;
-        const queue = [goalId];
-        while (queue.length) {
-            const u = queue.shift();
-            adjacency[u].forEach(v => {
-                if (hops[v] === Infinity) {
-                    hops[v] = hops[u] + 1;
-                    queue.push(v);
-                }
-            });
-        }
-        nodes.forEach(n => {
-            n.h = Number.isFinite(hops[n.id]) ? hops[n.id] * minWeight : 0;
-            d3.selectAll(".node-group")
-                .filter(d => d.id === n.id)
-                .select(".heuristic-label")
-                .text(`H: ${n.h}`);
-        });
-        drawGraph();
-    }
-
-    window.addEventListener("resize", () => {
-        const newWidth = svgEl.clientWidth;
-        const newHeight = svgEl.clientHeight;
-        if (newWidth !== 0 || newHeight !== 0) { resizeGraph(); }
-    });
-
+    // Resize Events
     window.addEventListener("resize", resizeGraph);
 
 
-// Call once on load
-    resizeGraph();
-
+    function init() {
+        generateRandomGraph(8);
+    }
+    init()
 });
