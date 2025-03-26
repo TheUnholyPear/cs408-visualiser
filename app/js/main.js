@@ -630,24 +630,27 @@ document.addEventListener("DOMContentLoaded", function() {
 
     //----------------------------------------------------------------------------------------------------------- DOWN
     function updateHeuristics(goalId) {
-        const goal = nodes.find(n => n.id === goalId);
-        if (!goal) return;
-        const minWeight = Math.min(...links.map(l => l.weight ?? Infinity));
-        const hops = {};
-        nodes.forEach(n => hops[n.id] = Infinity);
-        hops[goalId] = 0;
+        const goal = nodes.find(node => node.id === goalId);
+        if (!goal) {
+            return;
+        }
+
+        const minWeight = Math.min(...links.map(link => link.weight ?? Infinity));
+        const depth = {};
+        nodes.forEach(node => depth[node.id] = Infinity);
+        depth[goalId] = 0;
         const queue = [goalId];
         while (queue.length) {
             const u = queue.shift();
             adjacency[u].forEach(v => {
-                if (hops[v] === Infinity) {
-                    hops[v] = hops[u] + 1;
+                if (depth[v] === Infinity) {
+                    depth[v] = depth[u] + 1;
                     queue.push(v);
                 }
             });
         }
         nodes.forEach(n => {
-            n.h = Number.isFinite(hops[n.id]) ? hops[n.id] * minWeight : 0;
+            n.h = Number.isFinite(depth[n.id]) ? depth[n.id] * minWeight : 0;
             d3.selectAll(".node-group")
                 .filter(d => d.id === n.id)
                 .select(".heuristic-label")
@@ -762,7 +765,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         simulation.nodes(nodes);
         simulation.force("link").links(links);
-        simulation.alpha(1).restart();
+        simulation.alpha(0).stop();
 
         drawGraph();
         updateGoalNodeSelect();
@@ -782,7 +785,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // Update and restart the force simulation with the new arrays
         simulation.nodes(nodes);
         simulation.force("link").links(links);
-        simulation.alpha(1).restart();
+        simulation.alpha(0).stop();
 
         // Finally, redraw
         drawGraph();
