@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CS408 Project</title>
-  <script type="module" crossorigin src="/cs408-visualiser/assets/main-gSXfcP4k.js"></script>
-  <link rel="stylesheet" crossorigin href="/cs408-visualiser/assets/main-AxpJUNEt.css">
+  <script type="module" crossorigin src="/cs408-visualiser/assets/main-BVIiHM_K.js"></script>
+  <link rel="stylesheet" crossorigin href="/cs408-visualiser/assets/main-Bcw9Uglq.css">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -64,17 +64,19 @@
       <form id="generateGraphForm" class="mb-3">
         <div class="d-flex align-items-center">
           <label for="nodeCountInput" class="me-2 form-label">Nodes:</label>
-          <input type="number" class="form-control w-100" id="nodeCountInput" value="8" min="1" required/>
+          <input type="number" class="form-control w-100" id="nodeCountInput" min="1" max="20" placeholder="Max 20" required/>
         </div>
         <div class="form-check mb-3">
           <input class="form-check-input" type="checkbox" id="includeWeights" checked>
-          <label class="form-check-label" for="includeWeights">
-            Include Random Weights
-          </label>
+          <label class="form-check-label" for="includeWeights">Include Random Weights</label>
         </div>
         <button type="submit" class="w-100 btn btn-success">Generate</button>
       </form>
     </div>
+
+    <hr/>
+
+    <button id="sortGraphBtn" class="w-100 btn btn-secondary">Sort Graph</button>
 
     <hr/>
 
@@ -104,6 +106,10 @@
         <form id="deleteNodeForm">
           <button class="btn btn-danger" type="submit">Delete Node</button>
         </form>
+      </div>
+      <div class="d-flex justify-content-center align-items-center form-check form-switch mt-3" id="randomizeWeightsDiv">
+        <input class="form-check-input" type="checkbox" id="toggleRandomizeWeightsSwitch" checked>
+        <label class="form-check-label ms-2" for="toggleRandomizeWeightsSwitch">Randomize Weights</label>
       </div>
     </div>
 
@@ -220,8 +226,8 @@
                 <ul class="dropdown-menu" aria-labelledby="algorithmDropdown">
                   <li><a class="dropdown-item" href="#" data-algorithm="bfs">BFS</a></li>
                   <li><a class="dropdown-item" href="#" data-algorithm="dfs">DFS</a></li>
-                  <li><a class="dropdown-item" href="#" data-algorithm="aStar">A*</a></li>
                   <li><a class="dropdown-item" href="#" data-algorithm="ucs">UCS</a></li>
+                  <li><a class="dropdown-item" href="#" data-algorithm="aStar">A*</a></li>
                 </ul>
               </div>
 
@@ -278,12 +284,15 @@
     <h4 class="position-absolute top-0 start-50 translate-middle-x text-center w-100 py-2">
       Search Tree Visualization
     </h4>
-    <div id="searchTreeStats">
-      <p>Nodes Expanded: <span id="nodesExpanded">0</span></p>
-      <p>Nodes Discovered: <span id="nodesDiscovered">0</span></p>
-      <p>Current Depth: <span id="currentDepth">0</span></p>
-      <p>Steps to Goal: <span id="stepsToGoal">N/A</span></p>
-      <p>Final Cost: <span id="finalCost">N/A</span></p>
+    <div id="searchTreeStats" class="card bg-white bg-opacity-50 border-0 shadow-sm small"
+         style="position:absolute; top:7vh; left:10px; width:10rem;">
+      <div class="card-body p-2">
+        <p class="mb-1"><strong>Expanded:</strong> <span id="nodesExpanded">0</span></p>
+        <p class="mb-1"><strong>Discovered:</strong> <span id="nodesDiscovered">0</span></p>
+        <p class="mb-1"><strong>Depth:</strong> <span id="currentDepth">0</span></p>
+        <p class="mb-1"><strong>Steps:</strong> <span id="stepsToGoal">N/A</span></p>
+        <p class="mb-0"><strong>Cost:</strong> <span id="finalCost">N/A</span></p>
+      </div>
     </div>
     <svg id="searchTreePanelSvg" width="100%" height="100%">
 
