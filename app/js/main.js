@@ -403,6 +403,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 return snapNode?.cost !== undefined ? `Cost: ${snapNode.cost}` : "";
             });
 
+        console.log("Snapshot nodes in drawSearchTree:", snapshot.nodes);
+
         // Heuristic label
         nodeG.append("text")
             .attr("class", "heuristic-label")
@@ -601,6 +603,11 @@ document.addEventListener("DOMContentLoaded", function() {
         drawSearchTree(snapshot);
     }
 
+    function maybeUpdateHeuristics() {
+        const goalId = parseInt(goalNodeSelect.value, 10);
+        if (!isNaN(goalId)) updateHeuristics(goalId);
+    }
+
     function updateHeuristics(goalId) {
         const goal = nodes.find(node => node.id === goalId);
         if (!goal) {
@@ -734,7 +741,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function clearGoal() {
         d3.selectAll(".node-group").classed("goal-highlight", false);
+        const goalNodeSelect = document.getElementById("goalNodeSelect");
+        if (goalNodeSelect) {
+            goalNodeSelect.value = ""; // Reset dropdown
+        }
     }
+
 
     function highlightGoal(nodeId) {
         d3.selectAll(".node-group")
@@ -761,11 +773,13 @@ document.addEventListener("DOMContentLoaded", function() {
         });
         nextId++;
         buildAdjacency();
+        maybeUpdateHeuristics()
         simulation.nodes(nodes);
         simulation.force("link").links(links);
         simulation.alpha(0).stop();
         drawGraph();
         updateGoalNodeSelect();
+        showLinkWeights(showWeightsFlag)
     }
 
     function deleteNode(nodeId) {
@@ -776,6 +790,7 @@ document.addEventListener("DOMContentLoaded", function() {
             return s !== nodeId && t !== nodeId;
         });
         buildAdjacency();
+        maybeUpdateHeuristics()
         simulation.nodes(nodes);
         simulation.force("link").links(links);
         simulation.alpha(0).stop();
@@ -1214,7 +1229,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Sort Graph
     document.getElementById("sortGraphBtn").addEventListener("click", () => {
-        simulation.alpha(1).restart();
+        nodes.forEach(n => {
+            n.fx = null;
+            n.fy = null;
+        });
+        simulation.alpha(0.5).restart();
     });
 
     // deleteNode Form Event
@@ -1362,11 +1381,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 .text(d => d.weight);
             stopAlgorithm();
             clearSteps();
+            maybeUpdateHeuristics()
             drawGraph();
             alert("Link weight updated.");
         } else {
             links.push({ source: nodes[node1], target: nodes[node2], weight: newWeight });
             buildAdjacency();
+            maybeUpdateHeuristics()
             drawGraph();
             alert("Link did not exist, so it was created.");
         }
@@ -1386,6 +1407,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (idx !== -1) {
             links.splice(idx, 1);
             buildAdjacency();
+            maybeUpdateHeuristics()
             drawGraph();
             alert(`Link between ${node1} and ${node2} removed.`);
         } else {
@@ -1400,79 +1422,143 @@ document.addEventListener("DOMContentLoaded", function() {
             case "bfs":
                 html = `
             <h3>Breadth‑First Search (BFS)</h3>
-            <p><strong>Description:</strong> 
-            BFS explores the graph level by level, starting from the source node. It first visits all the neighbors of the source, then moves on to the neighbors of the neighbors, and so on. This guarantees that the first time a node is encountered, it's via the shortest possible path in terms of the number of edges. BFS is particularly useful for finding the shortest path in an unweighted graph, as it always explores all possible paths at the current depth before moving to the next level.</p>
+            <p>
+            Breadth-First Search (BFS) explores a graph level by level, starting from the source node.<br><br>
             
-            <img src="/assets/BFS.png" alt="BFS illustration" width="300">
+            It first visits all the immediate neighbors of the source. Then it continues to their neighbors, and so on.<br><br>
             
-            <p><strong>Example:</strong> Consider a graph with nodes 1, 2, 3, and 4:
-            Graph: 0 → 1, 0 → 2, 1 → 3
+            This guarantees that the first time a node is reached, it’s through the shortest possible path.<br><br>
             
-            Starting from node 0:
-            - First, BFS explores nodes 1 and 2 (since they are at the same level from 0).
-            - Then it moves on to node 3, visiting 1 → 3.
-            
-            The order of visits would be: 0 → 1, 0 → 2, 1 → 3.
+            BFS is especially useful for finding the shortest path in an <strong>unweighted graph</strong>, as it always completes one level before moving to the next.
             </p>
+
+            <h4 class="text-center"><u><strong>Example</strong></u></h4>
+            <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
+            <div class="text-center">
+                <img src="./public/assets/BFS.png" alt="BFS illustration" class="border rounded w-50">
+                <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
+            </div>
+            
+            <p>Starting from node 0:</p>
+            <ul>
+              <li>First, BFS explores nodes 1 and 2 (since they are at the same level from 0).</li>
+              <li>Then it moves on to node 3, visiting 1 → 3.</li>
+            </ul>
+            
+            <p><strong>The order of visits would be:</strong><br>
+            0 → 1, 0 → 2, 1 → 3</p>
                         `;
                 break;
             case "dfs":
                 html = `
-                <h3>Depth‑First Search (DFS)</h3>
-                <p><strong>Description:</strong> 
-                DFS is a traversal algorithm that explores as far along a branch as possible before backtracking. It uses a stack (either implicitly via recursion or explicitly) to keep track of which nodes to visit next. DFS doesn't guarantee finding the shortest path, as it may explore deep branches that aren't the most efficient way to reach the goal. It can be useful for exploring all possible paths or when you need to visit all nodes.</p>
-                
-               <img src="/assets/DFS.png" alt="DFS illustration" width="300">
-                
-                <p><strong>Example:</strong> In the same graph as BFS:
-                Graph: 0 → 1, 0 → 2, 1 → 3, 2 → 3
-                
-                If DFS starts at node 0, it may explore:
-                - First, it goes from 0 → 1 → 3 (going deep along the branch).
-                - After backtracking to 0, it then visits 2 → 3.
-                
-                The order of visits could be: 0 → 1 → 3 → 2 → 3.
-                </p>
+           <h3>Depth‑First Search (DFS)</h3>
+            <p>
+            Depth-First Search (DFS) explores a graph by going as deep as possible along each branch before backtracking.<br><br>
+            
+            Starting from the source node, it visits a neighbor, then that neighbor’s neighbor, continuing down until it can’t go further. Then it backtracks and explores unvisited paths.<br><br>
+
+            Unlike BFS, DFS does not guarantee the shortest path in an unweighted graph.
+            </p>
+            
+            <h4 class="text-center"><u><strong>Example</strong></u></h4>
+            <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
+            <div class="text-center">
+                <img src="./public/assets/DFS.png" alt="DFS illustration" class="border rounded w-50 mx-auto d-block">
+                <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
+            </div>
+            
+            <p>Starting from node 0:</p>
+            <ul>
+              <li>DFS goes deep first: from 0 → 1, then from 1 → 3.</li>
+              <li>After reaching the end of that path, it backtracks and explores 0 → 2.</li>
+            </ul>
+            
+            <p><strong>The order of visits might be:</strong><br>
+            0 → 1, 1 → 3, 0 → 2</p>
                         `;
                 break;
             case "ucs":
                 html = `
                 <h3>Uniform Cost Search (UCS)</h3>
-                <p><strong>Description:</strong> 
-                UCS is similar to BFS but differs in that it takes edge costs into account. It always expands the node with the lowest total cost first. This ensures that the search explores paths with the least cumulative cost, rather than the shortest number of edges as in BFS. UCS is ideal when you want to find the least-cost path in a weighted graph.</p>
+                <p>
+                Uniform Cost Search (UCS) is similar to BFS, but it considers the <u>total cost of paths</u> rather than just the number of steps.<br><br>
                 
-                <img src="/assets/UCS.png" alt="UCS illustration" width="300">
+                At each step, UCS expands the node with the <strong>lowest cumulative cost</strong> from the start node.<br><br>
                 
-                <p><strong>Example:</strong> Consider a graph with the following edge costs:
-                Graph: 0 → 1 (cost 1), 0 → 2 (cost 5), 1 → 3 (cost 5), 2 → 3 (cost 2)
-                
-                If UCS starts from node 0:
-                - UCS would first explore 0 → 1 (cost 1), then move on to 0 → 2 (cost 5).
-                - Next, UCS would explore 1 → 3 (cost 6 total) and 2 → 3 (cost 7 total).
-                - The optimal path is 0 → 1 → 3 (cost 6) rather than 0 → 2 → 3 (cost 7).
-                
-                The order of visits would be: 0 → 1 → 3 → 2.
+                This makes UCS ideal for finding the <strong>least-cost path</strong> in a <u>weighted graph</u>, where some paths may be longer but cheaper.
                 </p>
+                
+                <h4 class="text-center"><u><strong>Example</strong></u></h4>
+                <p>Consider the following graph:</p>
+                
+                <div class="text-center">
+                    <img src="./public/assets/UCS.png" alt="UCS illustration" class="border rounded w-50 mx-auto d-block">
+                    <p> Graph: <br>
+                        0 → 1 (weight 20),
+                        0 → 2 (weight 5),
+                        2 → 3 (weight 5),
+                        3 → 4 (weight 5),
+                        1 → 4 (weight 4)</p>
+                </div>
+                
+                <p>Starting from node 0, UCS proceeds as follows:</p>
+                <ul>
+                  <li>Explore 0 → 2 (cost 5) first, since it's the lowest cost.</li>
+                  <li>Then from 2 → 3 (cost 5) Total cost: 10)</li>
+                  <li>Then from 3 → 4 (cost 5) total cost: 15)</li>
+                  <li>Lastly, 0 → 1 (cost 19) </li>
+                  <li>0 → 1 (cost 19) is less than the cost from 4 → 1 (Cost 5) Total Cost: 20</li>
+                </ul>
+                
+                <p><strong>The order of visits would be:</strong><br>
+                0 → 2, 2 → 3, 3 → 4, 0 → 1</p>
                         `;
                 break;
             case "aStar":
                 html = `
                 <h3>A* Search</h3>
-                <p><strong>Description:</strong> 
-                A* is a more advanced search algorithm that combines path cost and a heuristic estimate of the remaining distance to the goal. It evaluates nodes based on both the actual cost to reach the node and the estimated cost from the node to the goal, making it more efficient than UCS and BFS in many cases. A* is optimal and complete, meaning it will find the shortest path if one exists, as long as the heuristic is admissible (i.e., it doesn't overestimate the cost to the goal).</p>
+                <p>
+                A* Search is an informed search algorithm that selects the next node to expand based on both the cost 
+                and an estimate of the remaining cost to reach the goal (heuristic). A goal is needed to generate the heuristic.
+                </p>
                 
-                <img src="/assets/ASTAR.png" alt="ASTAR illustration" width="300">
+                <p>
+                A heuristic is <strong>admissible</strong> when it never overestimates the true cost to reach the 
+                goal. This ensures that A* finds the least‑cost path without exploring unnecessary routes.
+                </p>
                 
-                <p><strong>Example:</strong> Consider a graph with the following edges and heuristic values (straight-line distance to goal D):
-                Graph: 0 → 1 (cost 1), 0 → 2 (cost 5), 1 → 3 (cost 5), 2 → 3 (cost 2)
-                Heuristic: h(0) = 3, h(1) = 1, h(2) = 4, h(3) = 0
+                <h4 class="text-center"><u><strong>Example</strong></u></h4>
+                <p>In the graph below, the goal node is <strong>node 1</strong>:</p>
                 
-                Starting from node A:
-                - A* first evaluates the node with the smallest sum of path cost and heuristic (0 → 1 + h(1) = 1 + 1 = 2).
-                - Then it moves to 1 → 3 (cost 6 total).
-                - Despite 0 → 2 being cheaper in terms of path cost, A* prefers 0 → 1 → 3 because its heuristic suggests 3 is closer via 1.
+                <div class="text-center">
+                    <img src="./public/assets/ASTAR.png" alt="A* illustration" class="border rounded w-50 mx-auto d-block">
+                    <p>Graph: <br>
+                0 → 1 (weight 19),
+                0 → 2 (weight 5),
+                2 → 3 (weight 5),
+                3 → 4 (weight 5),
+                4 → 1 (weight 5)
+                    </p>
+                </div>
                 
-                The order of visits would be: 0 → 2 → 3.
+                <p>The heuristic estimates cost to reach node 1 (goal) are:</p>
+                <ul>
+                  <li>Node 0: heuristic 5</li>
+                  <li>Node 2: heuristic 10</li>
+                  <li>Node 3: heuristic 10</li>
+                  <li>Node 4: heuristic 5</li>
+                  <li>Node 1 (goal): heuristic 0</li>
+                </ul>
+                
+                <p>Starting from node 0, A* expands nodes in order of: combined total cost (cost) + estimated remaining cost (heuristic):</p>
+                <ul>
+                  <li>First expand 0 → 2 (cost(5) + heuristic(10) = 15).</li>
+                  <li>Then expand 0 → 1 (cost(19) + heuristic(0) = 19).</li>
+                  <li>0 → 1 (cost(19) + heuristic(0) = 19) is less than the cost from 2 → 3 (cost(10) + heuristic(10) = 20)</li>
+                </ul>
+                
+                <p><strong>The order of visits is:</strong><br>
+                0 → 2, 0 → 1
                 </p>
                       `;
                 break;
@@ -1516,14 +1602,6 @@ document.addEventListener("DOMContentLoaded", function() {
     function stopResize() {
         document.removeEventListener("pointermove", doResize);
     }
-
-
-
-
-
-
-
-
 
     // Toast Toggle Event
     const toggleToastSwitch = document.getElementById("toggleToastSwitch");
