@@ -24,16 +24,15 @@ html, body {
     position: relative;
 }
 
-/* Sidebar Styling */
 .sidebar {
-    width: 20vw; /* Default width */
-    min-width: 150px;
-    max-width: 600px;
+    width: 25vw;
+    min-width: 8vw;
+    max-width: 33vw;
     height: 95vh;
     overflow-y: auto;
     border-right: 2px solid #ccc;
     transition: width 0.2s;
-    position: relative; /* Ensures resizer stays aligned */
+    position: relative;
 }
 
 #sidebarResizer {
@@ -46,17 +45,16 @@ html, body {
     user-select: none;
 }
 
+#sidebarResizer:hover {
+    background-color: #bbb;
+}
+
+
 #searchTreePanelSvg {
     box-sizing: border-box;
     margin: 16px;
     overflow: visible;
 }
-
-
-#sidebarResizer:hover {
-    background-color: #bbb;
-}
-
 
 /* Main content styling */
 .main-content {
@@ -352,26 +350,9 @@ html, body {
 }
 
 #searchTreePanel.open {
-    flex: 0 0 50vw;
+    flex: 0 0 40vw;
     border: 5px solid cadetblue;
 }
-
-#searchTreeStats {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: rgba(255,255,255,0.85);
-    padding: 8px 12px;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    z-index: 2200;
-    font-size: 0.9rem;
-}
-
-#searchTreeStats p {
-    margin: 2px 0;
-}
-
 
 .tree-toggle-btn {
     position: absolute;
