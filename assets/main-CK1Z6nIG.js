@@ -23,7 +23,7 @@ Path: ${i.join(" -> ")}`,C),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
             <h4 class="text-center"><u><strong>Example</strong></u></h4>
             <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
             <div class="text-center">
-                <img src="/assets/BFS.png" alt="BFS illustration" class="border rounded w-50">
+                <img src="./assets/BFS.png" alt="BFS illustration" class="border rounded w-50">
                 <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
             </div>
             
@@ -48,7 +48,7 @@ Path: ${i.join(" -> ")}`,C),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
             <h4 class="text-center"><u><strong>Example</strong></u></h4>
             <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
             <div class="text-center">
-                <img src="/assets/DFS.png" alt="DFS illustration" class="border rounded w-50 mx-auto d-block">
+                <img src="./assets/DFS.png" alt="DFS illustration" class="border rounded w-50 mx-auto d-block">
                 <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
             </div>
             
@@ -74,7 +74,7 @@ Path: ${i.join(" -> ")}`,C),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
                 <p>Consider the following graph:</p>
                 
                 <div class="text-center">
-                    <img src="/assets/UCS.png" alt="UCS illustration" class="border rounded w-50 mx-auto d-block">
+                    <img src="./assets/UCS.png" alt="UCS illustration" class="border rounded w-50 mx-auto d-block">
                     <p> Graph: <br>
                         0 → 1 (weight 20),
                         0 → 2 (weight 5),
@@ -110,7 +110,7 @@ Path: ${i.join(" -> ")}`,C),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
                 <p>In the graph below, the goal node is <strong>node 1</strong>:</p>
                 
                 <div class="text-center">
-                    <img src="/assets/ASTAR.png" alt="A* illustration" class="border rounded w-50 mx-auto d-block">
+                    <img src="./assets/ASTAR.png" alt="A* illustration" class="border rounded w-50 mx-auto d-block">
                     <p>Graph: <br>
                 0 → 1 (weight 19),
                 0 → 2 (weight 5),
