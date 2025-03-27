@@ -13,7 +13,7 @@ Path: ${i.join(" -> ")}`,N),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
             <p><strong>Description:</strong> 
             BFS explores the graph level by level, starting from the source node. It first visits all the neighbors of the source, then moves on to the neighbors of the neighbors, and so on. This guarantees that the first time a node is encountered, it's via the shortest possible path in terms of the number of edges. BFS is particularly useful for finding the shortest path in an unweighted graph, as it always explores all possible paths at the current depth before moving to the next level.</p>
             
-            <img src="/assets/BFS.png" alt="BFS illustration" width="300">
+            <img src="./assets/BFS.png" alt="BFS illustration" width="300">
             
             <p><strong>Example:</strong> Consider a graph with nodes 1, 2, 3, and 4:
             Graph: 0 → 1, 0 → 2, 1 → 3
@@ -29,7 +29,7 @@ Path: ${i.join(" -> ")}`,N),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
                 <p><strong>Description:</strong> 
                 DFS is a traversal algorithm that explores as far along a branch as possible before backtracking. It uses a stack (either implicitly via recursion or explicitly) to keep track of which nodes to visit next. DFS doesn't guarantee finding the shortest path, as it may explore deep branches that aren't the most efficient way to reach the goal. It can be useful for exploring all possible paths or when you need to visit all nodes.</p>
                 
-               <img src="/assets/DFS.png" alt="DFS illustration" width="300">
+               <img src="./assets/DFS.png" alt="DFS illustration" width="300">
                 
                 <p><strong>Example:</strong> In the same graph as BFS:
                 Graph: 0 → 1, 0 → 2, 1 → 3, 2 → 3
@@ -45,7 +45,7 @@ Path: ${i.join(" -> ")}`,N),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
                 <p><strong>Description:</strong> 
                 UCS is similar to BFS but differs in that it takes edge costs into account. It always expands the node with the lowest total cost first. This ensures that the search explores paths with the least cumulative cost, rather than the shortest number of edges as in BFS. UCS is ideal when you want to find the least-cost path in a weighted graph.</p>
                 
-                <img src="/assets/UCS.png" alt="UCS illustration" width="300">
+                <img src="./assets/UCS.png" alt="UCS illustration" width="300">
                 
                 <p><strong>Example:</strong> Consider a graph with the following edge costs:
                 Graph: 0 → 1 (cost 1), 0 → 2 (cost 5), 1 → 3 (cost 5), 2 → 3 (cost 2)
@@ -62,7 +62,7 @@ Path: ${i.join(" -> ")}`,N),a=!1;return}J(k===h?`DFS: Root Node ${h}`:`DFS: Visi
                 <p><strong>Description:</strong> 
                 A* is a more advanced search algorithm that combines path cost and a heuristic estimate of the remaining distance to the goal. It evaluates nodes based on both the actual cost to reach the node and the estimated cost from the node to the goal, making it more efficient than UCS and BFS in many cases. A* is optimal and complete, meaning it will find the shortest path if one exists, as long as the heuristic is admissible (i.e., it doesn't overestimate the cost to the goal).</p>
                 
-                <img src="/assets/ASTAR.png" alt="ASTAR illustration" width="300">
+                <img src="./assets/ASTAR.png" alt="ASTAR illustration" width="300">
                 
                 <p><strong>Example:</strong> Consider a graph with the following edges and heuristic values (straight-line distance to goal D):
                 Graph: 0 → 1 (cost 1), 0 → 2 (cost 5), 1 → 3 (cost 5), 2 → 3 (cost 2)
