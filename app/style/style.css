@@ -104,6 +104,7 @@ html, body {
     background-color: transparent !important;
     font-size: 1rem;
     padding: 0.75rem;
+    white-space: pre-wrap;
 }
 
 /* Tab content layout */

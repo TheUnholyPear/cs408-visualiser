@@ -300,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function() {
         updateContainerSize();
         svg.attr("width", width).attr("height", height);
         simulation.force("center", d3.forceCenter(width/2, height/2))
-            .alpha(0.5).restart();
+            .alpha(1).restart();
         nodes.forEach(constrainNode);
         updatePositions();
     }
@@ -595,6 +595,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (snapshot.path) {
             highlightPath(snapshot.path);
         }
+        if (snapshot.currentNode != null) {
+            highlightCurrent(snapshot.currentNode);
+        }
         if (snapshot.currentStep) {
             const toastBody = currentStepToastEl.querySelector('.toast-body');
             toastBody.textContent = snapshot.currentStep;
@@ -605,7 +608,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function maybeUpdateHeuristics() {
         const goalId = parseInt(goalNodeSelect.value, 10);
-        if (!isNaN(goalId)) updateHeuristics(goalId);
+        if (!isNaN(goalId)) {
+            updateHeuristics(goalId);
+        }
     }
 
     function updateHeuristics(goalId) {
@@ -613,6 +618,19 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!goal) {
             return;
         }
+
+        if (links.some(link => link.weight === undefined)) {
+            nodes.forEach(node => {
+                node.h = 0;
+                d3.selectAll(".node-group")
+                    .filter(d => d.id === node.id)
+                    .select(".heuristic-label")
+                    .text(`H: ${node.h}`);
+            });
+            drawGraph();
+            return;
+        }
+
         const minWeight = Math.min(...links.map(link => link.weight ?? Infinity));
         const depth = {};
         nodes.forEach(node => depth[node.id] = Infinity);
@@ -705,13 +723,19 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // ───────── Highlighting Helpers ─────────
-    function highlightNode(nodeId) {
+    function highlightCurrent(nodeId) {
         d3.selectAll(".node-group").classed("current-highlight", false);
         d3.selectAll(".node-group")
             .filter(d => d.id === nodeId)
-            .classed("highlighted", true)
             .classed("current-highlight", true);
     }
+
+    function highlightNode(nodeId) {
+        d3.selectAll(".node-group")
+            .filter(d => d.id === nodeId)
+            .classed("highlighted", true);
+    }
+
 
     function clearHighlights() {
         d3.selectAll(".node-group")
@@ -835,7 +859,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-
     // ───────── Search Algorithms ─────────
 
     // Breadth-First Search (BFS)
@@ -858,7 +881,9 @@ document.addEventListener("DOMContentLoaded", function() {
         currentParents = parents;
 
         function visitNext() {
-            if (!isAlgorithmRunning) return;
+            if (!isAlgorithmRunning) {
+                return;
+            }
             delay = 0;
             if (queue.length === 0) {
                 delayedLog(`BFS: Finished without reaching a goal`, expanded);
@@ -868,6 +893,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const current = queue.shift();
             expanded.push(current);
             highlightNode(current);
+            highlightCurrent(current);
             if (current === goalId) {
                 let path = [current];
                 while (path[0] !== startId) {
@@ -875,18 +901,18 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 currentPath = path;
                 highlightPath(currentPath);
-                delayedLog(`BFS: Goal Node ${goalId} found! \nPath: ${currentPath.join(" -> ")}`, expanded);
+                delayedLog(`BFS: Moving to Node ${current} \n Goal Node found! \nPath: ${currentPath.join(" -> ")}`, expanded);
                 isAlgorithmRunning = false;
                 return;
             }
             if (current === startId) {
                 delayedLog(`BFS: Root Node ${startId}`, expanded);
-                const startNodeObj = getNode(startId);
-                if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
-                    startNodeObj.discoveryIndex = discoveredCount++;
+                const startNode = getNode(startId);
+                if (startNode && startNode.discoveryIndex === undefined) {
+                    startNode.discoveryIndex = discoveredCount++;
                 }
             } else {
-                delayedLog(`BFS: Moving to Node ${current}`, expanded);
+                delayedLog(`BFS: Moving to Node ${current}. Adding to expanded`, expanded);
             }
             adjacency[current]?.forEach(nbr => {
                 if (!visited.has(nbr)) {
@@ -895,14 +921,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     if (!(nbr in parents)) {
                         parents[nbr] = current;
                     }
-                    const nbrNodeObj = getNode(nbr);
-                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
-                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    const nbrNode = getNode(nbr);
+                    if (nbrNode && nbrNode.discoveryIndex === undefined) {
+                        nbrNode.discoveryIndex = discoveredCount++;
                     }
                     delayedLog(`BFS: Discovered Node ${nbr}. Adding to queue.`, expanded);
                 }
             });
-            delayedLog(`BFS: Queue: [${queue.join(", ")}] | Discovered: [${[...visited].join(", ")}]`, expanded);
+            delayedLog(`BFS: Queue: [${queue.join(", ")}], \nDiscovered: [${[...visited].join(", ")}], \nExpanded: [${expanded.join(", ")}]`, expanded);
             scheduleTimeout(visitNext, delay);
         }
         visitNext();
@@ -937,13 +963,9 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             const current = stack.pop();
             expanded.push(current);
-            if (current === startId) {
-                const startNodeObj = getNode(startId);
-                if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
-                    startNodeObj.discoveryIndex = discoveredCount++;
-                }
-            }
             highlightNode(current);
+            highlightCurrent(current);
+
             if (current === goalId) {
                 let path = [current];
                 while (path[0] !== startId) {
@@ -951,14 +973,18 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 currentPath = path;
                 highlightPath(currentPath);
-                delayedLog(`DFS: Goal Node ${goalId} found! \nPath: ${currentPath.join(" -> ")}`, expanded);
+                delayedLog(`DFS: Moving to Node ${current} \n Goal Node found! \nPath: ${currentPath.join(" -> ")}`, expanded);
                 isAlgorithmRunning = false;
                 return;
             }
             if (current === startId) {
                 delayedLog(`DFS: Root Node ${startId}`, expanded);
+                const startNode = getNode(startId);
+                if (startNode && startNode.discoveryIndex === undefined) {
+                    startNode.discoveryIndex = discoveredCount++;
+                }
             } else {
-                delayedLog(`DFS: Visiting Node ${current}`, expanded);
+                delayedLog(`DFS: Moving to Node ${current}. Adding to expanded`, expanded);
             }
             const neighbors = adjacency[current] || [];
             for (let i = neighbors.length - 1; i >= 0; i--) {
@@ -969,14 +995,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     if (!(nbr in parents)) {
                         parents[nbr] = current;
                     }
-                    const nbrNodeObj = getNode(nbr);
-                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
-                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    const nbrNode = getNode(nbr);
+                    if (nbrNode && nbrNode.discoveryIndex === undefined) {
+                        nbrNode.discoveryIndex = discoveredCount++;
                     }
                     delayedLog(`DFS: Discovered Node ${nbr}. Adding to stack.`, expanded);
                 }
             }
-            delayedLog(`DFS: Stack: [${stack.join(", ")}] | Visited: [${[...visited].join(", ")}]`, expanded);
+            delayedLog(`DFS: Stack: [${stack.join(", ")}], \nDiscovered: [${[...visited].join(", ")}], \nExpanded: [${expanded.join(", ")}]`, expanded);
             scheduleTimeout(visitNext, delay);
         }
         visitNext();
@@ -998,17 +1024,16 @@ document.addEventListener("DOMContentLoaded", function() {
             n.discoveryIndex = undefined;
         });
         let discoveredCount = 0;
-        const startNodeObj = getNode(startId);
-        if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
-            startNodeObj.discoveryIndex = discoveredCount++;
+        const startNode = getNode(startId);
+        if (startNode && startNode.discoveryIndex === undefined) {
+            startNode.discoveryIndex = discoveredCount++;
         }
         let frontier = [{ node: startId, cost: 0 }];
-        let explored = new Set();
+        const expanded = [];
         let parents = {};
         currentParents = parents;
         let costs = {};
         costs[startId] = 0;
-        const expanded = [];
 
         function visitNext() {
             if (!isAlgorithmRunning) return;
@@ -1022,17 +1047,24 @@ document.addEventListener("DOMContentLoaded", function() {
             let currentObj = frontier.shift();
             let current = currentObj.node;
             let currentCost = currentObj.cost;
+
             if (currentCost > costs[current]) {
                 delayedLog(`UCS: Skipping node [${current}] with cost ${currentCost} (better cost is ${costs[current]}).`, expanded);
                 scheduleTimeout(visitNext, delay);
                 return;
             }
-            explored.add(current);
+
             highlightNode(current);
+            highlightCurrent(current);
             setNodeCost(current, currentCost);
             expanded.push(current);
             scheduleTimeout(() => displayNodeCost(current, currentCost), delay - 1);
-            delayedLog(`UCS: Expanding node [${current}] with cost ${currentCost}.`, expanded);
+            if (current === startId) {
+                delayedLog(`UCS: Root Node ${startId}`, expanded);
+            } else {
+                delayedLog(`UCS: Expanding node [${current}] with cost ${currentCost}.`, expanded);
+            }
+
             if (current === goalId) {
                 let path = [current];
                 while (path[0] !== startId) {
@@ -1040,36 +1072,42 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 currentPath = path;
                 highlightPath(currentPath);
-                delayedLog(`UCS: Goal node [${goalId}] reached! Path: ${currentPath.join(" -> ")}, Total cost: ${currentCost}.`, expanded);
+                delayedLog(`UCS: Goal node [${goalId}] reached!\nPath: ${currentPath.join(" -> ")}\nTotal cost: ${currentCost}.`, expanded);
                 isAlgorithmRunning = false;
                 return;
             }
             (adjacency[current] || []).forEach(neighbor => {
                 let link = links.find(link => {
-                    const s = link.source.id;
-                    const t = link.target.id;
-                    return ((s === current && t === neighbor) || (t === current && s === neighbor));
+                    const source = link.source.id;
+                    const target = link.target.id;
+                    return ((source === current && target === neighbor) || (target === current && source === neighbor));
                 });
-                if (!link) return;
+                if (!link) {
+                    return;
+                }
                 let newCost = currentCost + link.weight;
                 if (costs[neighbor] === undefined || newCost < costs[neighbor]) {
                     let oldCost = costs[neighbor] !== undefined ? costs[neighbor] : "none";
                     costs[neighbor] = newCost;
                     parents[neighbor] = current;
-                    const nbrNodeObj = getNode(neighbor);
-                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
-                        nbrNodeObj.discoveryIndex = discoveredCount++;
+
+                    const nbrNode = getNode(neighbor);
+                    if (nbrNode && nbrNode.discoveryIndex === undefined) {
+                        nbrNode.discoveryIndex = discoveredCount++;
                     }
                     frontier.push({ node: neighbor, cost: newCost });
                     setNodeCost(neighbor, newCost);
                     scheduleTimeout(() => displayNodeCost(neighbor, newCost), delay - 1);
-                    delayedLog(`UCS: Found node [${neighbor}], Updating cost from ${oldCost} to ${newCost}.`, expanded);
-                    if (explored.has(neighbor)) {
-                        delayedLog(`UCS: Reopening node [${neighbor}] (cost improved).`, expanded);
-                        explored.delete(neighbor);
+
+                    if (oldCost !== "none") {
+                        delayedLog(`UCS: Reopening node [${neighbor}], Updating cost from ${oldCost} to ${newCost}.`, expanded);
+                    } else {
+                        delayedLog(`UCS: Found node [${neighbor}], Updating cost from ${oldCost} to ${newCost}.`, expanded);
                     }
                 }
             });
+            delayedLog(
+                `UCS: Frontier: [${frontier.map(n => `${n.node}(${n.cost})`).join(", ")}], \nDiscovered: [${Object.keys(costs).join(", ")}], \nExpanded: [${expanded.join(", ")}]`, expanded);
             scheduleTimeout(visitNext, delay);
         }
         visitNext();
@@ -1089,77 +1127,90 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
         if (links.some(link => link.weight === undefined)) {
-            alert("Error: Graph must be fully weighted to run AStar.");
+            alert("Error: Graph must be fully weighted to run A*.");
             return;
         }
-
-        nodes.forEach(n => {
-            n.discoveryIndex = undefined;
-        });
+        nodes.forEach(n => n.discoveryIndex = undefined);
         let discoveredCount = 0;
-        const startNodeObj = getNode(startId);
-        if (startNodeObj && startNodeObj.discoveryIndex === undefined) {
-            startNodeObj.discoveryIndex = discoveredCount++;
+        const startNode = getNode(startId);
+        if (startNode) {
+            startNode.discoveryIndex = discoveredCount++;
         }
-        const frontier = [{ node: startId, g: 0 }];
-        const costs = { [startId]: 0 };
-        const parents = {};
+
+        let frontier = [{ node: startId, cost: 0 }];
+        const expanded = [];
+        let parents = {};
         currentParents = parents;
-        const expanded = new Set();
+        let costs = { [startId]: 0 };
 
         function visitNext() {
             if (!isAlgorithmRunning) return;
             delay = 0;
+
             if (frontier.length === 0) {
-                delayedLog("A*: No path found.", [...expanded]);
+                delayedLog("A*: No path found. Frontier empty.", expanded);
                 isAlgorithmRunning = false;
                 return;
             }
-            frontier.sort((a, b) => (a.g + getHeuristic(a.node)) - (b.g + getHeuristic(b.node)));
-            const { node: current, g: currentG } = frontier.shift();
+            frontier.sort((a, b) => (a.cost + getHeuristic(a.node)) - (b.cost + getHeuristic(b.node)));
+            const {node: current, cost: currentG} = frontier.shift();
+
             if (currentG > costs[current]) {
+                delayedLog(`A*: Skipping node [${current}] with f‑value ${(currentG + getHeuristic(current))} (better f‑value ${(costs[current] + getHeuristic(current))})`, expanded);
                 scheduleTimeout(visitNext, delay);
                 return;
             }
+
             highlightNode(current);
+            highlightCurrent(current);
             setNodeCost(current, currentG);
-            expanded.add(current);
-            delayedLog(`A*: Expanding node ${current} (f=${(currentG + getHeuristic(current)).toFixed(2)})`, [...expanded]);
+            expanded.push(current);
+            scheduleTimeout(() => displayNodeCost(current, currentG), delay - 1);
+            if (current === startId) {
+                delayedLog(`A*: Root Node ${startId}`, expanded);
+            } else {
+                delayedLog(`A*: Expanding node [${current}] \nCost = ${currentG} \nHeuristic = ${getHeuristic(current)} \nf‑value = ${currentG + getHeuristic(current)}`, expanded);
+            }
             if (current === goalId) {
-                const path = [current];
-                while (path[0] !== startId) {
-                    path.unshift(parents[path[0]]);
-                }
+                let path = [current];
+                while (path[0] !== startId) path.unshift(parents[path[0]]);
                 currentPath = path;
                 highlightPath(path);
-                delayedLog(`A*: Goal reached! Path: ${path.join(" -> ")}`, [...expanded]);
+                delayedLog(`A*: Goal reached! Path: ${path.join(" -> ")}`, expanded);
                 isAlgorithmRunning = false;
                 return;
             }
-            adjacency[current]?.forEach(neighbor => {
-                const link = links.find(link => {
-                    const s = link.source.id;
-                    const t = link.target.id;
-                    return ((s === current && t === neighbor) || (t === current && s === neighbor));
-                });
+
+            (adjacency[current] || []).forEach(neighbor => {
+                const link = links.find(l => ((l.source.id === current && l.target.id === neighbor) || (l.target.id === current && l.source.id === neighbor)));
                 if (!link) return;
+
                 const tentativeG = currentG + link.weight;
+                const oldCost = costs[neighbor] ?? "none";
                 if (costs[neighbor] === undefined || tentativeG < costs[neighbor]) {
                     costs[neighbor] = tentativeG;
                     parents[neighbor] = current;
-                    const nbrNodeObj = getNode(neighbor);
-                    if (nbrNodeObj && nbrNodeObj.discoveryIndex === undefined) {
-                        nbrNodeObj.discoveryIndex = discoveredCount++;
+                    const nbrNode = getNode(neighbor);
+                    if (nbrNode && nbrNode.discoveryIndex === undefined) {
+                        nbrNode.discoveryIndex = discoveredCount++;
                     }
-                    frontier.push({ node: neighbor, g: tentativeG });
+                    frontier.push({ node: neighbor, cost: tentativeG });
+                    setNodeCost(neighbor, tentativeG);
                     scheduleTimeout(() => displayNodeCost(neighbor, tentativeG), delay - 1);
-                    delayedLog(`A*: Discovered ${neighbor}, g=${tentativeG.toFixed(2)}, f=${(tentativeG + getHeuristic(neighbor)).toFixed(2)}`, [...expanded]);
+
+                    if (oldCost !== "none") {
+                        delayedLog(`A*: Reopening node [${neighbor}], Updating g from ${oldCost} to ${tentativeG}`, expanded);
+                    } else {
+                        delayedLog(`A*: Discovered node [${neighbor}] with Cost = ${tentativeG}`, expanded);
+                    }
                 }
             });
+            delayedLog(`A*: Frontier: [${frontier.map(n => `${n.node}(${(n.cost+getHeuristic(n.node))})`).join(", ")}], \nDiscovered: [${Object.keys(costs).join(", ")}], \nExpanded: [${expanded.join(", ")}]`, expanded);
             scheduleTimeout(visitNext, delay);
         }
         visitNext();
     }
+
 
     // ───────── Event Listeners ─────────
 
@@ -1272,10 +1323,14 @@ document.addEventListener("DOMContentLoaded", function() {
     // Select Goal Node Event
     const goalNodeSelect = document.getElementById("goalNodeSelect");
     goalNodeSelect.addEventListener("change", () => {
-        stopAlgorithm()
-        clearGoal();
+        stopAlgorithm();
+        d3.selectAll(".node-group").classed("goal-highlight", false);
         const goalId = parseInt(goalNodeSelect.value, 10);
-        highlightGoal(goalId);
+
+        if (!isNaN(goalId)) {
+            updateHeuristics(goalId);
+            highlightGoal(goalId);
+        }
     });
 
     // Random Goal Button Event
@@ -1435,7 +1490,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <h4 class="text-center"><u><strong>Example</strong></u></h4>
             <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
             <div class="text-center">
-                <img src="./public/assets/BFS.png" alt="BFS illustration" class="border rounded w-50">
+                <img src="./assets/BFS.png" alt="BFS illustration" class="border rounded w-50">
                 <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
             </div>
             
@@ -1463,7 +1518,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <h4 class="text-center"><u><strong>Example</strong></u></h4>
             <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
             <div class="text-center">
-                <img src="./public/assets/DFS.png" alt="DFS illustration" class="border rounded w-50 mx-auto d-block">
+                <img src="./assets/DFS.png" alt="DFS illustration" class="border rounded w-50 mx-auto d-block">
                 <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
             </div>
             
@@ -1492,7 +1547,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <p>Consider the following graph:</p>
                 
                 <div class="text-center">
-                    <img src="./public/assets/UCS.png" alt="UCS illustration" class="border rounded w-50 mx-auto d-block">
+                    <img src="./assets/UCS.png" alt="UCS illustration" class="border rounded w-50 mx-auto d-block">
                     <p> Graph: <br>
                         0 → 1 (weight 20),
                         0 → 2 (weight 5),
@@ -1518,8 +1573,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 html = `
                 <h3>A* Search</h3>
                 <p>
-                A* Search is an informed search algorithm that selects the next node to expand based on both the cost 
-                and an estimate of the remaining cost to reach the goal (heuristic). A goal is needed to generate the heuristic.
+                A* Search is an informed search algorithm that selects the next node to expand based on both the <u>cost</u> 
+                and the <u>estimate of the remaining cost to reach the goal <strong>(heuristic)</strong></u>. A goal is needed to generate the heuristic.
                 </p>
                 
                 <p>
@@ -1531,7 +1586,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 <p>In the graph below, the goal node is <strong>node 1</strong>:</p>
                 
                 <div class="text-center">
-                    <img src="./public/assets/ASTAR.png" alt="A* illustration" class="border rounded w-50 mx-auto d-block">
+                    <img src="./assets/ASTAR.png" alt="A* illustration" class="border rounded w-50 mx-auto d-block">
                     <p>Graph: <br>
                 0 → 1 (weight 19),
                 0 → 2 (weight 5),
@@ -1665,23 +1720,11 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("currentDepth").textContent = depth;
     }
 
-    // Goal Node Select Event
-    document.getElementById("goalNodeSelect").addEventListener("change", () => {
-        clearGoal();
-        const goalId = parseInt(goalNodeSelect.value, 10);
-        if (isNaN(goalId)) {
-            return;
-        }
-        highlightGoal(goalId);
-        updateHeuristics(goalId);
-    });
-
     // Graph Tab Resize Event
     document.getElementById("graph-tab").addEventListener("shown.bs.tab", () => {
-        width = svgEl.clientWidth;
-        height = svgEl.clientHeight;
-        nodes.forEach(constrainNode);
-        updatePositions();
+        setTimeout(() => {
+            resizeGraph()
+        }, 0);
     });
 
     window.addEventListener("resize", () => {
