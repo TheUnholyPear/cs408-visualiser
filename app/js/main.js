@@ -1238,11 +1238,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 },
                 {   element: "#selectGoalDiv",
                     intro: "Choose your goal node (or click Set Random Goal).",
-                    position: "top"
+                    position: "right"
                 },
                 {   element: "#selectStartDiv",
                     intro: "Choose your starting node for all searches.",
-                    position: "top"
+                    position: "right"
                 },
                 {   element: "#AddNodeDiv",
                     intro: "Click Add or Delete to modify nodes. Activate a parent by clicking its inner circle first.",
@@ -1250,19 +1250,19 @@ document.addEventListener("DOMContentLoaded", function() {
                 },
                 {   element: "#randomizeWeightsDiv",
                     intro: "Toggle this to give the links created to random weights.",
-                    position: "bottom"
+                    position: "right"
                 },
                 {   element: "#updateLinkForm",
                     intro: "Use these controls to create, update, or remove an edge between two nodes.",
-                    position: "top"
+                    position: "right"
                 },
                 {   element: "#resetDiv",
                     intro: "This is where you can reset your tree back to baseline.",
-                    position: "top"
+                    position: "right"
                 },
                 {   element: "#toggleSidebar",
                     intro: "Hide or show the sidebar to give more room to the graph.",
-                    position: "left"
+                    position: "right"
                 },
                 {   element: "#algorithmDropdown",
                     intro: "Pick a search algorithm (BFS, DFS, UCS, or A*).",
