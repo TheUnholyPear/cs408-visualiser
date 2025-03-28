@@ -3,7 +3,6 @@ import introJs from 'intro.js';
 
 document.addEventListener("DOMContentLoaded", function() {
 
-    // ───────── Global Variables and Initialization ─────────
     let nodes = [];
     let links = [];
     let nextId = 0;
@@ -11,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function() {
     let currentPath = null;
     let currentParents = {};
 
-    // History steps and control variables
     let historySteps = [];
     let currentStepIndex = -1;
     let allTimeouts = [];
@@ -20,7 +18,6 @@ document.addEventListener("DOMContentLoaded", function() {
     let selectedAlgorithm = null;
     let stepDelay = parseInt(document.getElementById("speedSlider").value, 10);
 
-    //flags
     let showWeightsFlag = true;
     let showHeuristicsFlag = false;
     let randomizeWeightsFlag = true;
@@ -32,25 +29,22 @@ document.addEventListener("DOMContentLoaded", function() {
     // Logs
     const stepsList = document.getElementById("stepsList");
 
-    // Container dimensions and SVG setup
+    // SVG setup
     const svgEl = document.getElementById("graphSvg");
     let width = svgEl.clientWidth;
     let height = svgEl.clientHeight;
-    const svg = d3.select("#graphSvg")
-        .attr("width", width)
-        .attr("height", height);
+    const svg = d3.select("#graphSvg").attr("width", width).attr("height", height);
     const linkGroup = svg.append("g").attr("class", "links");
     const nodeGroup = svg.append("g").attr("class", "nodes");
     const labelGroup = svg.append("g").attr("class", "labels");
 
-    // Toast for current step
     const currentStepToastEl = document.getElementById('currentStepToast');
     const currentStepToast = new bootstrap.Toast(currentStepToastEl, {
         autohide: false,
         animation: false
     });
 
-    // ───────── D3 Force Simulation Setup ─────────
+    // --------- D3 Force Simulation Setup ---------
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(50).strength(0.5))
         .force("charge", d3.forceManyBody().strength(-500))
@@ -62,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function() {
             updatePositions();
         });
 
-    // ───────── Graph Drawing and Utility Functions ─────────
+    // --------- Graph Drawing and Utility Functions ---------
     let linkSelection, nodeSelection, linkLabelSelection;
     function drawGraph() {
         // LINKS
@@ -110,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("class", "outer-circle")
             .attr("r", outerRadius);
 
-        // Inner circle (click toggles activation)
+        // Inner circle
         nodeEntering.append("circle")
             .attr("class", "inner-circle")
             .attr("r", innerRadius)
@@ -129,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("dominant-baseline", "central")
             .text(d => d.id);
 
-        // Heuristic label (below id)
+        // Heuristic label
         nodeEntering.append("text")
             .attr("class", "heuristic-label")
             .attr("x", 0)
@@ -138,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .style("pointer-events", "none")
             .text(d => d.h !== undefined ? `h: ${d.h}` : "");
 
-        // Cost label (below node)
+        // Cost label
         nodeEntering.append("text")
             .attr("class", "cost-label")
             .attr("x", 0)
@@ -156,7 +150,7 @@ document.addEventListener("DOMContentLoaded", function() {
         updateGoalNodeSelect();
     }
 
-    // ───────── Graph Generation Function ─────────
+    // --------- Graph Generation Function ---------
     function generateRandomGraph(numNodes) {
         wipeCosts();
         wipeLinksAndWeights();
@@ -216,7 +210,6 @@ document.addEventListener("DOMContentLoaded", function() {
             const { source, target } = edge;
             if (degreeCount[source] < 3 && degreeCount[target] < 3) {
                 let countDeg3 = degreeCount.filter(d => d === 3).length;
-                let fractionDeg3 = countDeg3 / numNodes;
                 let inc = 0;
                 if (degreeCount[source] === 2) inc++;
                 if (degreeCount[target] === 2) inc++;
@@ -278,7 +271,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Helper: Get a specific node
+    // Get a specific node
     function getNode(idOrObj) {
         if (typeof idOrObj === "object") return idOrObj;
         return nodes.find(n => n.id === idOrObj);
@@ -289,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function() {
         d.y = Math.max(outerRadius, Math.min(height - outerRadius, d.y));
     }
 
-    // Update container size from DOM element
+    // Update container size
     function updateContainerSize() {
         const size = svgEl.getBoundingClientRect();
         width = size.width;
@@ -305,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function() {
         updatePositions();
     }
 
-    // ───────── Search-Tree Functions ─────────
+    // --------- Search-Tree Functions ---------
     function buildTreeData(parents, startId) {
         const children = {};
         Object.entries(parents).forEach(([child, parent]) => {
@@ -328,25 +321,19 @@ document.addEventListener("DOMContentLoaded", function() {
         if (w === 0 || h === 0) return;
 
         const startId = +document.getElementById("startNodeSelect").value;
-
-        // 1) Build the hierarchy
         const root = d3.hierarchy(buildTreeData(snapshot.parents, startId));
 
-        // 2) Copy discoveryIndex from snapshot to each node in the hierarchy
         root.each(d => {
             const snapNode = snapshot.nodes.find(n => n.id === d.data.id);
             d.data.discoveryIndex = snapNode?.discoveryIndex ?? Infinity;
         });
-
-        // 3) Sort children by their discoveryIndex so that siblings appear left->right
         root.sort((a, b) => a.data.discoveryIndex - b.data.discoveryIndex);
 
-        // 4) Run the tree layout (top to bottom)
         d3.tree().size([w - 2 * outerRadius, h - 3 * outerRadius])(root);
         const cx = d => Math.max(outerRadius, Math.min(w - outerRadius, d.x + outerRadius));
         const cy = d => Math.max(outerRadius, Math.min(h - outerRadius, d.y + outerRadius));
 
-        // Draw links
+        // Links
         svg.selectAll(".link")
             .data(root.links())
             .enter().append("line")
@@ -360,7 +347,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 snapshot.path.includes(d.target.data.id)
             );
 
-        // Draw nodes
+        // Nodes
         const nodeG = svg.selectAll(".node-group")
             .data(root.descendants())
             .enter().append("g")
@@ -381,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("class", "inner-circle")
             .attr("r", innerRadius);
 
-        // Node label (ID)
+        // Node ID
         nodeG.append("text")
             .attr("class", "node-label")
             .attr("x", 0)
@@ -402,8 +389,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 const snapNode = snapshot.nodes.find(n => n.id === d.data.id);
                 return snapNode?.cost !== undefined ? `Cost: ${snapNode.cost}` : "";
             });
-
-        console.log("Snapshot nodes in drawSearchTree:", snapshot.nodes);
 
         // Heuristic label
         nodeG.append("text")
@@ -443,7 +428,6 @@ document.addEventListener("DOMContentLoaded", function() {
         d3.selectAll("#searchTreePanelSvg .heuristic-label")
             .style("display", showHeuristicsFlag ? "block" : "none");
 
-
         updateSearchTreeStats(snapshot);
     }
 
@@ -473,7 +457,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
 
-    // ───────── Cost Label & Logging Helpers ─────────
+    // --------- Cost Label & Logging Helpers ---------
     function updateCostLabel(nodeId, cost) {
         const node = nodes.find(n => n.id === nodeId);
         if (node) { node.cost = cost; }
@@ -655,7 +639,7 @@ document.addEventListener("DOMContentLoaded", function() {
         drawGraph();
     }
 
-    // ───────── Reset and Clear Functions ─────────
+    // --------- Reset and Clear Functions ---------
     function wipeCosts() {
         nodes.forEach(n => { n.cost = undefined; });
         d3.selectAll(".node-group")
@@ -678,7 +662,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("finalCost").textContent = "N/A";
     }
 
-    // ───────── Update Select Elements ─────────
+    // --------- Update Select Elements ---------
     const startNodeSelect = document.getElementById("startNodeSelect");
     const node1Select = document.getElementById("node1Select");
     const node2Select = document.getElementById("node2Select");
@@ -722,7 +706,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // ───────── Highlighting Helpers ─────────
+    // --------- Highlighting Helpers ---------
     function highlightCurrent(nodeId) {
         d3.selectAll(".node-group").classed("current-highlight", false);
         d3.selectAll(".node-group")
@@ -778,7 +762,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .classed("goal-highlight", true);
     }
 
-    // ───────── Node Modification Functions ─────────
+    // --------- Node Modification Functions ---------
     function addNode(parentIds) {
         const newNode = {
             id: nextId,
@@ -826,7 +810,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return node?.h ?? 0;
     }
 
-    // ───────── Link Weight and Heuristic Visibility ─────────
+    // --------- Link Weight and Heuristic Visibility ---------
     function showLinkWeights() {
         updateWeightsVisibility(true);
     }
@@ -859,7 +843,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-    // ───────── Search Algorithms ─────────
+    // --------- Search Algorithms ---------
 
     // Breadth-First Search (BFS)
     function bfs(startId, goalId) {
@@ -1212,9 +1196,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
 
-    // ───────── Event Listeners ─────────
+    // --------- Event Listeners ---------
 
-    // Generate Graph Form Event
+    // Generate Graph Event
     const nodeCountInput = document.getElementById("nodeCountInput");
     document.getElementById("generateGraphForm").addEventListener("submit", (e) => {
         stopAlgorithm();
@@ -1229,24 +1213,97 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Tutorial Button Event
     document.getElementById("tutorialBtn").addEventListener("click", () => {
-        introJs().setOptions({
+        const intro = introJs()
+        intro.setOptions({
             steps: [
-                { element: "#generateGraphForm", intro: "Enter how many nodes you want and click Generate to build a new random graph.", position: "right" },
-                { element: "#weightDiv", intro: "Toggle this to show or hide edge weights on the graph.", position: "right" },
-                { element: "#heuristicToggleDiv", intro: "Toggle heuristics (h‑values) on each node — useful for A* search.", position: "right" },
-                { element: "#AddNodeDiv", intro: "Click Add or Delete to modify nodes. Activate a parent by clicking its inner circle first.", position: "right" },
-                { element: "#updateLinkForm", intro: "Use these controls to create, update, or remove an edge between two nodes.", position: "top" },
-                { element: "#selectStartDiv", intro: "Choose your starting node for all searches.", position: "top" },
-                { element: "#selectGoalDiv", intro: "Choose your goal node (or click Set Random Goal).", position: "top" },
-                { element: "#algorithmDropdown", intro: "Pick a search algorithm (BFS, DFS, UCS, or A*).", position: "bottom" },
-                { element: "#runAlgorithmBtn", intro: "Run the selected algorithm — watch the traversal animate!", position: "bottom" },
-                { element: "#speedControls", intro: "Adjust how fast each step of the algorithm plays.", position: "top" },
-                { element: ".backStep", intro: "Step backwards through the algorithm history.", position: "top" },
-                { element: ".forwardStep", intro: "Step forwards through the algorithm history.", position: "top" },
-                { element: "#toggleSidebar", intro: "Hide or show the sidebar to give more room to the graph.", position: "left" },
-                { element: "#toggleTreeBtn", intro: "Open the Search Tree panel to see the traversal tree.", position: "left" },
-                { element: "#mainGraph", intro: "This is the interactive graph area — drag nodes around or click them to activate.", position: "top" },
-                { element: "#searchTreePanel", intro: "This is the Search Tree panel — it visualizes the traversal tree and shows stats about nodes expanded, discovered, depth, cost, etc.", position: "left" }
+                {   element: "#generateGraphForm",
+                    intro: "Enter how many nodes you want and click Generate to build a new random graph.",
+                    position: "right"
+                },
+                {   element: "#sortGraphBtn",
+                    intro: "Click this to allow the graph to untangle itself",
+                    position: "right"
+                },
+                {   element: "#weightDiv",
+                    intro: "Toggle this to show or hide link weights on the graph.",
+                    position: "right"
+                },
+                {   element: "#heuristicToggleDiv",
+                    intro: "Toggle this to show or hide heuristics (H‑values) on each node.",
+                    position: "right"
+                },
+                {   element: "#toastToggleDiv",
+                    intro: "Toggle this to hide the step by step pop-up explanation",
+                    position: "right"
+                },
+                {   element: "#selectGoalDiv",
+                    intro: "Choose your goal node (or click Set Random Goal).",
+                    position: "top"
+                },
+                {   element: "#selectStartDiv",
+                    intro: "Choose your starting node for all searches.",
+                    position: "top"
+                },
+                {   element: "#AddNodeDiv",
+                    intro: "Click Add or Delete to modify nodes. Activate a parent by clicking its inner circle first.",
+                    position: "right"
+                },
+                {   element: "#randomizeWeightsDiv",
+                    intro: "Toggle this to give the links created to random weights.",
+                    position: "bottom"
+                },
+                {   element: "#updateLinkForm",
+                    intro: "Use these controls to create, update, or remove an edge between two nodes.",
+                    position: "top"
+                },
+                {   element: "#resetDiv",
+                    intro: "This is where you can reset your tree back to baseline.",
+                    position: "top"
+                },
+                {   element: "#toggleSidebar",
+                    intro: "Hide or show the sidebar to give more room to the graph.",
+                    position: "left"
+                },
+                {   element: "#algorithmDropdown",
+                    intro: "Pick a search algorithm (BFS, DFS, UCS, or A*).",
+                    position: "bottom"
+                },
+                {   element: "#runAlgorithmBtn",
+                    intro: "Run the selected algorithm — watch the traversal animate!",
+                    position: "bottom"
+                },
+                {   element: "#getInfoBtn",
+                    intro: "Click this if you would like more information on the algorythm selected",
+                    position: "bottom"
+                },
+                {   element: "#speedControls",
+                    intro: "Adjust how fast each step of the algorithm plays.",
+                    position: "top"
+                },
+                {   element: ".backStep",
+                    intro: "Step backwards through the algorithm history.",
+                    position: "top"
+                },
+                {   element: ".forwardStep",
+                    intro: "Step forwards through the algorithm history.",
+                    position: "top"
+                },
+                {   element: "#graphSvg",
+                    intro: "This is the interactive graph area — drag nodes around or click them to activate.",
+                    position: "top"
+                },
+                {   element: "#steps-tab",
+                    intro: "This is the History Tab button. Click here to view your past actions.",
+                    position: "bottom"
+                },
+                {   element: "#toggleTreeBtn",
+                    intro: "Open the Search Tree panel to see the traversal tree.",
+                    position: "left"
+                },
+                {   element: "#searchTreePanel",
+                    intro: "This is where the search tree is displayed — it visualizes the traversal tree with statistics.",
+                    position: "left"
+                }
             ],
             showStepNumbers: true,
             exitOnOverlayClick: true,
@@ -1256,10 +1313,45 @@ document.addEventListener("DOMContentLoaded", function() {
             doneLabel: "Finish",
             overlayOpacity: 0.5,
             tooltipClass: "customTooltip"
-        }).start();
+
+        });
+
+        intro.onbeforechange(function(targetElement) {
+            if (targetElement.id === "searchTreePanel") {
+                const panel = document.getElementById("searchTreePanel");
+                if (!panel.classList.contains("open")) {
+                    document.getElementById("toggleTreeBtn").click();
+                }
+            }
+        });
+
+        intro.onafterchange(function(targetElement) {
+            if (targetElement.id !== "searchTreePanel") {
+                const panel = document.getElementById("searchTreePanel");
+                if (panel.classList.contains("open")) {
+                    document.getElementById("toggleTreeBtn").click();
+                }
+            }
+        });
+
+        intro.oncomplete(function() {
+            const panel = document.getElementById("searchTreePanel");
+            if (panel.classList.contains("open")) {
+                document.getElementById("toggleTreeBtn").click();
+            }
+        });
+
+        intro.onexit(function() {
+            const panel = document.getElementById("searchTreePanel");
+            if (panel.classList.contains("open")) {
+                document.getElementById("toggleTreeBtn").click();
+            }
+        });
+
+        intro.start();
     });
 
-    // addNode Form Event
+    // addNode Event
     document.getElementById("addNodeForm").addEventListener("submit", (e) => {
         stopAlgorithm();
         clearSteps();
@@ -1287,7 +1379,7 @@ document.addEventListener("DOMContentLoaded", function() {
         simulation.alpha(0.5).restart();
     });
 
-    // deleteNode Form Event
+    // deleteNode Event
     document.getElementById("deleteNodeForm").addEventListener("submit", (e) => {
         stopAlgorithm();
         clearSteps();
@@ -1733,12 +1825,10 @@ document.addEventListener("DOMContentLoaded", function() {
         scheduleTreeRedraw();
     });
 
-    // ───────── Initialization ─────────
+    // --------- Initialization ------------
     function init() {
         generateRandomGraph(8);
     }
     init();
 
 });
-
-

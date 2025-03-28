@@ -1,9 +1,7 @@
-/* Global settings */
 html, body {
     overflow: hidden;
 }
 
-/* Navbar positioning */
 .navbar {
     position: fixed;
     top: 0;
@@ -16,7 +14,6 @@ html, body {
     display: none !important;
 }
 
-/* Main container layout */
 .main-container {
     margin-top: 5vh;
     height: 95vh;
@@ -25,7 +22,7 @@ html, body {
 }
 
 .sidebar {
-    width: 25vw;
+    width: 20vw;
     min-width: 8vw;
     max-width: 33vw;
     height: 95vh;
@@ -56,7 +53,6 @@ html, body {
     overflow: visible;
 }
 
-/* Main content styling */
 .main-content {
     display: flex;
     flex-direction: column;
@@ -67,7 +63,6 @@ html, body {
     overflow-y: auto;
 }
 
-/* Tab styling (overriding Bootstrap defaults) */
 .nav-tabs .nav-link {
     border-radius: 0 !important;
     box-sizing: border-box;
@@ -81,11 +76,9 @@ html, body {
     color: #000;
 }
 
-/* Toast customization */
 .toast-container {
-    z-index: 1055;
+    z-index: 2000;
 }
-
 
 #currentStepToast {
     background-color: rgba(52, 58, 64, 0.7) !important;
@@ -107,7 +100,6 @@ html, body {
     white-space: pre-wrap;
 }
 
-/* Tab content layout */
 .tab-content {
     flex: 1 1 auto;
     display: flex;
@@ -122,7 +114,6 @@ html, body {
     min-height: 0;
 }
 
-/* Graph container styling */
 .graphContainer {
     flex: 1 1 auto;
     position: relative;
@@ -133,7 +124,6 @@ html, body {
 
 }
 
-/* SVG fills the container */
 #graphSvg {
     width: 100%;
     height: 100%;
@@ -144,7 +134,6 @@ html, body {
     height: 100%;
 }
 
-/* Algorithm steps area */
 #algorithmSteps {
     flex: 1 1 auto;
     min-height: 0;
@@ -183,7 +172,6 @@ html, body {
     color: #666;
 }
 
-/* Graph node styling */
 .node-group {
     cursor: move;
 }
@@ -193,21 +181,17 @@ html, body {
     pointer-events: none;
 }
 
-/* Additional node styling for goal highlight */
 .node-group.goal-highlight .outer-circle {
     fill: #e74c3c !important;
 }
 
-/* Visited = orange */
 .node-group.highlighted .outer-circle {
     fill: orange !important;
 }
 
-/* Current = green (higher specificity) */
 .node-group.highlighted.current-highlight .outer-circle {
     fill: green !important;
 }
-
 
 .outer-circle {
     fill: steelblue;
@@ -305,11 +289,6 @@ html, body {
 .speed-label {
     font-weight: bold;
     margin-bottom: 5px;
-}
-
-.speed-options {
-    display: flex;
-    gap: 10px;
 }
 
 .speed-options label {
