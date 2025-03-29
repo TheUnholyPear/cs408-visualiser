@@ -29,7 +29,7 @@ Expanded: [${S.join(", ")}]`,S),at(T,c)}T()}const Hn=document.getElementById("no
                           <p>
                          This application is designed to help you learn and explore various search algorithms. 
                          You can freely create and edit graphs, then experiment with different search methods. 
-                         There’s no 'game' or risk of failure, it is purely for educational purposes.
+                         <strong><u>There’s no 'game' or risk of failure</u></strong>, it is purely for educational purposes.
                           </p>
                           <hr style="margin: 20px 0;">
                           <table style="width: 100%; border-collapse: collapse;  table-layout: fixed; text-align: center;">
