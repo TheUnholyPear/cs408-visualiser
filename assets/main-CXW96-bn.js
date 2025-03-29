@@ -25,11 +25,11 @@ f‑value = ${b+Nt(B)}`,S),B===m){let k=[B];for(;k[0]!==h;)k.unshift(j[k[0]]);i=
 Discovered: [${Object.keys(A).join(", ")}], 
 Expanded: [${S.join(", ")}]`,S),at(T,c)}T()}const Hn=document.getElementById("nodeCountInput");document.getElementById("generateGraphForm").addEventListener("submit",h=>{ot(),ut(),Xe(),h.preventDefault();let m=parseInt(Hn.value,10);m<1||(Rt(m),Hn.value="")}),document.getElementById("tutorialBtn").addEventListener("click",()=>{const h=gn();h.setOptions({steps:[{intro:`
                      <div style="text-align: center;">
-                        <div style="width: 800px; margin: 0 auto; font-family: Arial, sans-serif; text-align: center;">
+                        <div style="width: 50vw; margin: 0 auto; text-align: center;">
                           <p>
                             This application is here to help you learn and explore different search algorithms. You can create and edit the graph as much as you want
                             and then search it with the selected algorythm. <br>
-                            There is no "goal" in a gaming sense, and you cannot "fail". It is designed solely for education
+                            There is no "goal" in a gaming sense, and you cannot "fail". This is designed solely for education
                           </p>
                           <hr style="margin: 20px 0;">
                           <table style="width: 100%; border-collapse: collapse;  table-layout: fixed; text-align: center;">
