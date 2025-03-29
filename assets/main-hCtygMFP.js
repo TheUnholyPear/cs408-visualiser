@@ -26,73 +26,73 @@ Discovered: [${Object.keys(A).join(", ")}],
 Expanded: [${S.join(", ")}]`,S),at(T,c)}T()}const Hn=document.getElementById("nodeCountInput");document.getElementById("generateGraphForm").addEventListener("submit",h=>{ot(),ut(),Xe(),h.preventDefault();let m=parseInt(Hn.value,10);m<1||(Rt(m),Hn.value="")}),document.getElementById("tutorialBtn").addEventListener("click",()=>{const h=gn();h.setOptions({steps:[{intro:`
                      <div style="text-align: center;">
                         <div style="width: 50vw; margin: 0 auto; text-align: center;">
-                          <p>
-                         This application is designed to help you learn and explore various search algorithms. 
-                         You can freely create and edit graphs, then experiment with different search methods. 
-                         <strong><u>There’s no 'game' or risk of failure</u></strong>, it is purely for educational purposes.
-                          </p>
-                          <hr style="margin: 20px 0;">
-                          <table style="width: 100%; border-collapse: collapse;  table-layout: fixed; text-align: center;">
-                            <tr>
-                                <td class="legend-cell">
-                                    <strong>Node ID:</strong><br>
-                                    <img src="./assets/nodeId.png" alt="Node ID" class="legend-img"><br>
-                                    <p>The identifier for the node.</p>
-                                </td>
-                                <td class="legend-cell">
-                                    <strong>Node (Blue):</strong><br>
-                                    <img src="./assets/unvisitedNode.png" alt="Unvisited Node" class="legend-img"><br>
-                                    <p>A standard node that hasn’t been visited yet.</p>
-                                </td>
-                                <td class="legend-cell"">
-                                    <strong>Links:</strong><br>
-                                    <img src="./assets/linkedNode.png" alt="Linked Node" class="legend-img"><br>
-                                    <p>Indicates that nodes are connected.</p>
-                                </td>                            
-                            </tr>
-                                 <tr>
-                                 <td class="legend-cell">
-                                    <strong>Current Node (Green):</strong><br>
-                                    <img src="./assets/currentNode.png" alt="Current Node" class="legend-img"><br>
-                                    <p>The node currently being explored.</p>
-                                 </td>
-                                 <td class="legend-cell">
-                                    <strong>Visited Node (Orange):</strong><br>
-                                    <img src="./assets/visitedNode.png" alt="Visited Node" class="legend-img"><br>
-                                    <p>A node that has been explored previously.</p>
-                                 </td>
-                                 <td class="legend-cell">
-                                    <strong>Goal Node (Red):</strong><br>
-                                    <img src="./assets/goalNode.png" alt="Goal Node" class="legend-img"><br>
-                                    <p>The node the algorithm is attempting to find.</p>
-                                 </td>
-                                 </tr>
-                            <tr>
-                                 <td class="legend-cell">
-                                    <strong>Weight:</strong><br>
-                                    <img src="./assets/linkWeight.png" alt="Link Weight" class="legend-img"><br>
-                                    <p>Represents the cost (Think distance) to travel over the link (used for UCS and A*).</p>
-                                 </td>
-                                 <td class="legend-cell">
-                                    <strong>Heuristic:</strong><br>
-                                    <img src="./assets/heuristic.png" alt="Heuristic" class="legend-img"><br>
-                                    <p>An estimated cost to the goal node (only used in A*).</p>
-                                 </td>
-                                 <td class="legend-cell">
-                                    <strong>Highlighted Path:</strong><br>
-                                    <img src="./assets/highlightedPath.png" alt="Highlighted Path" class="legend-img"><br>
-                                    <p>Shows the path to the goal node once it has been found.</p>
-                                 </td>
-                            </tr>
-                            <tr class="justify-content-center">
-                                 <td colspan="3" class="legend-cell">
-                                    <strong>Activated Node:</strong><br>
-                                    <img src="./assets/activatedNode.png" alt="Highlighted Path" class="legend-img"><br>
-                                    <p>Click a node to activate it. The activated nodes are only for determining what
-                                     node to delete, or what nodes are connected when adding a node</p>
-                                 </td>
-                            </tr>
-                          </table>
+                            <p>
+                            This application is designed to help you learn and explore various search algorithms. 
+                            You can freely create and edit graphs, then experiment with different search methods. 
+                            <strong><u>There’s no 'game' or risk of failure</u></strong>, it is purely for educational purposes.
+                            </p>
+                            <hr class="mt-3 mb-3" >
+                            <table style="width: 100%; border-collapse: collapse;  table-layout: fixed; text-align: center;">
+                                <tr>
+                                    <td class="legend-cell">
+                                        <strong>Node ID:</strong><br>
+                                        <img src="./assets/nodeId.png" alt="Node ID" class="legend-img"><br>
+                                        <p>The identifier for the node.</p>
+                                    </td>
+                                    <td class="legend-cell">
+                                        <strong>Node (Blue):</strong><br>
+                                        <img src="./assets/unvisitedNode.png" alt="Unvisited Node" class="legend-img"><br>
+                                        <p>A standard node that hasn’t been visited yet.</p>
+                                    </td>
+                                    <td class="legend-cell"">
+                                        <strong>Links:</strong><br>
+                                        <img src="./assets/linkedNode.png" alt="Linked Node" class="legend-img"><br>
+                                        <p>Indicates that nodes are connected.</p>
+                                    </td>                            
+                                </tr>
+                                <tr>
+                                    <td class="legend-cell">
+                                        <strong>Current Node (Green):</strong><br>
+                                        <img src="./assets/currentNode.png" alt="Current Node" class="legend-img"><br>
+                                        <p>The node currently being explored.</p>
+                                    </td>
+                                    <td class="legend-cell">
+                                        <strong>Visited Node (Orange):</strong><br>
+                                        <img src="./assets/visitedNode.png" alt="Visited Node" class="legend-img"><br>
+                                        <p>A node that has been explored previously.</p>
+                                    </td>
+                                    <td class="legend-cell">
+                                        <strong>Goal Node (Red):</strong><br>
+                                        <img src="./assets/goalNode.png" alt="Goal Node" class="legend-img"><br>
+                                        <p>The node the algorithm is attempting to find.</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="legend-cell">
+                                        <strong>Weight:</strong><br>
+                                        <img src="./assets/linkWeight.png" alt="Link Weight" class="legend-img"><br>
+                                        <p>Represents the cost (Think distance) to travel over the link (used for UCS and A*).</p>
+                                    </td>
+                                    <td class="legend-cell">
+                                        <strong>Heuristic:</strong><br>
+                                        <img src="./assets/heuristic.png" alt="Heuristic" class="legend-img"><br>
+                                        <p>An estimated cost to the goal node (only used in A*).</p>
+                                    </td>
+                                    <td class="legend-cell">
+                                        <strong>Highlighted Path:</strong><br>
+                                        <img src="./assets/highlightedPath.png" alt="Highlighted Path" class="legend-img"><br>
+                                        <p>Shows the path to the goal node once it has been found.</p>
+                                    </td>
+                                </tr>
+                                <tr class="justify-content-center">
+                                    <td colspan="3" class="legend-cell">
+                                        <strong>Activated Node:</strong><br>
+                                        <img src="./assets/activatedNode.png" alt="Highlighted Path" class="legend-img"><br>
+                                        <p>Click a node to activate it. The activated nodes are only for determining what
+                                         node to delete, or what nodes are connected when adding a node</p>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                      </div>
                       `,tooltipClass:"my-large-step"},{element:"#generateGraphForm",intro:"Enter how many nodes you want and click Generate to build a new random graph.",position:"right"},{element:"#sortGraphBtn",intro:"Click this to allow the graph to untangle itself",position:"right"},{element:"#weightDiv",intro:"Toggle this to show or hide link weights on the graph. Only used in UCS and A*",position:"right"},{element:"#heuristicToggleDiv",intro:"Toggle this to show or hide heuristics (H‑values) on each node. Only used in A*",position:"right"},{element:"#toastToggleDiv",intro:"Toggle this to hide the step by step pop-up explanation",position:"right"},{element:"#selectStartDiv",intro:"Choose your starting node for all searches.",position:"right"},{element:"#selectGoalDiv",intro:"Choose your goal node (or click Set Random Goal).",position:"right"},{element:"#AddNodeDiv",intro:"Click Add or Delete to modify nodes. Activate a parent by clicking its inner circle first.",position:"right"},{element:"#randomizeWeightsDiv",intro:"Toggle this to give the links created to random weights.",position:"right"},{element:"#updateLinkForm",intro:"Use these controls to create, update, or remove an edge between two nodes.",position:"right"},{element:"#resetDiv",intro:"This is where you can reset your tree back to baseline.",position:"right"},{element:"#toggleSidebar",intro:"Hide or show the sidebar to give more room to the graph.",position:"right"},{element:"#algorithmDropdown",intro:"Pick a search algorithm (BFS, DFS, UCS, or A*).",position:"bottom"},{element:"#runAlgorithmBtn",intro:"Run the selected algorithm — watch the traversal animate!",position:"bottom"},{element:"#getInfoBtn",intro:"Click this if you would like more information on the algorythm selected",position:"bottom"},{element:"#speedControls",intro:"Adjust how fast each step of the algorithm plays.",position:"top"},{element:".backStep",intro:"Step backwards through the algorithm history.",position:"top"},{element:".forwardStep",intro:"Step forwards through the algorithm history.",position:"top"},{element:"#graphSvg",intro:"This is the interactive graph area — drag nodes around or click them to activate.",position:"top"},{element:"#steps-tab",intro:"This is the History Tab button. Click here to view your past actions.",position:"bottom"},{element:"#toggleTreeBtn",intro:"Open the Search Tree panel to see the traversal tree.",position:"left"},{element:"#searchTreePanel",intro:"This is where the search tree is displayed — it visualizes the traversal tree with statistics.",position:"left"}],showStepNumbers:!0,exitOnOverlayClick:!0,exitOnEsc:!0,nextLabel:"Next",prevLabel:"Back",doneLabel:"Finish",overlayOpacity:.5,tooltipClass:"customTooltip"}),h.onbeforechange(function(m){m.id==="searchTreePanel"&&(document.getElementById("searchTreePanel").classList.contains("open")||document.getElementById("toggleTreeBtn").click())}),h.onafterchange(function(m){m.id!=="searchTreePanel"&&document.getElementById("searchTreePanel").classList.contains("open")&&document.getElementById("toggleTreeBtn").click()}),h.oncomplete(function(){document.getElementById("searchTreePanel").classList.contains("open")&&document.getElementById("toggleTreeBtn").click()}),h.onexit(function(){document.getElementById("searchTreePanel").classList.contains("open")&&document.getElementById("toggleTreeBtn").click()}),h.start()}),document.getElementById("addNodeForm").addEventListener("submit",h=>{ot(),ut(),h.preventDefault();const v=V(".node-group").filter(function(E){return ft(this).select(".inner-circle").classed("activated")}).data().map(E=>E.id);hi(v),V(".inner-circle").classed("activated",!1)}),document.getElementById("toggleRandomizeWeightsSwitch").addEventListener("change",h=>w=h.target.checked),document.getElementById("sortGraphBtn").addEventListener("click",()=>{t.forEach(h=>{h.fx=null,h.fy=null}),I.alpha(.5).restart()}),document.getElementById("deleteNodeForm").addEventListener("submit",h=>{ot(),ut(),h.preventDefault();const m=V(".node-group").filter(function(v){return ft(this).select(".inner-circle").classed("activated")}).data();if(m.length===0){alert("Please activate at least one node to delete by clicking on its inner circle.");return}m.forEach(v=>{fi(v.id)}),V(".inner-circle").classed("activated",!1)});const qn=document.getElementById("speedSlider");qn.addEventListener("input",function(){f=parseInt(qn.value,10)}),document.getElementById("restartBtn").addEventListener("click",()=>{ot(),ut(),Xe(),Ue(),jn()});const Ut=document.getElementById("goalNodeSelect");Ut.addEventListener("change",()=>{ot(),V(".node-group").classed("goal-highlight",!1);const h=parseInt(Ut.value,10);isNaN(h)||(Oe(h),We(h))}),document.getElementById("randomGoalBtn").addEventListener("click",()=>{if(ot(),Xe(),t.length===0)return;const h=t[Math.floor(Math.random()*t.length)];Ut.value=h.id;const m=parseInt(Ut.value,10);Oe(m),We(m),alert(`Randomly selected goal: ${h.id}`)}),document.getElementById("toggleWeightsSwitch").addEventListener("change",h=>Ke(h.target.checked)),document.getElementById("toggleHeuristicSwitch").addEventListener("change",h=>Je(h.target.checked)),document.querySelectorAll(".backStep").forEach(h=>h.addEventListener("click",()=>{l>0?(l--,qe(s[l].snapshot)):alert("No previous step available.")})),document.querySelectorAll(".forwardStep").forEach(h=>h.addEventListener("click",()=>{l<s.length-1?(l++,qe(s[l].snapshot)):alert("No next step available.")})),document.querySelectorAll(".dropdown-item").forEach(h=>{h.addEventListener("click",function(m){m.preventDefault(),d=this.getAttribute("data-algorithm"),document.getElementById("algorithmDropdown").innerText=this.innerText})}),document.getElementById("runAlgorithmBtn").addEventListener("click",function(){const h=parseInt(document.getElementById("startNodeSelect").value,10),m=parseInt(document.getElementById("goalNodeSelect").value,10);switch(d){case"bfs":pi(h,m);break;case"dfs":gi(h,m);break;case"ucs":mi(h,m);break;case"aStar":yi(h,m);break;default:alert("No algorithm selected.")}}),document.getElementById("updateLinkBtn").addEventListener("click",function(){const h=parseInt(document.getElementById("node1Select").value,10),m=parseInt(document.getElementById("node2Select").value,10);if(h===m){alert("Cannot create a link from a node to itself.");return}let v=parseFloat(document.getElementById("newWeightInput").value);isNaN(v)&&(v=void 0);let E=!1;if(e.forEach(C=>{const S=C.source.id,j=C.target.id;(S===h&&j===m||S===m&&j===h)&&(C.weight=v,E=!0)}),E){const C=O.selectAll(".link-label").data(e.filter(S=>S.weight!==void 0),S=>`${S.source.id}-${S.target.id}`);C.exit().remove(),C.enter().append("text").attr("class","link-label").attr("text-anchor","middle").attr("dominant-baseline","central").style("pointer-events","none").merge(C).text(S=>S.weight),ot(),ut(),qt(),K(),alert("Link weight updated.")}else e.push({source:t[h],target:t[m],weight:v}),bt(),qt(),K(),alert("Link did not exist, so it was created.")}),document.getElementById("removeLinkBtn").addEventListener("click",()=>{ot(),ut();const h=parseInt(document.getElementById("node1Select").value,10),m=parseInt(document.getElementById("node2Select").value,10),v=e.findIndex(E=>{const C=E.source.id,S=E.target.id;return C===h&&S===m||C===m&&S===h});v!==-1?(e.splice(v,1),bt(),qt(),K(),alert(`Link between ${h} and ${m} removed.`)):alert("No link exists between those two nodes.")}),document.getElementById("getInfoBtn").addEventListener("click",()=>{let h="";switch(d){case"bfs":h=`
