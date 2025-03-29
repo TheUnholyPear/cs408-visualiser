@@ -14,6 +14,8 @@ html, body {
     display: none !important;
 }
 
+
+
 .main-container {
     margin-top: 5vh;
     height: 95vh;
@@ -219,40 +221,31 @@ html, body {
     stroke-width: 2px;
 }
 
-
-/* Border override for tab content */
 .border-2 {
     border-width: 5px !important;
     border-color: cadetblue !important;
 }
 
-/* Final path highlighting */
-/* Nodes on the final path */
 .path-highlight .outer-circle {
     stroke: #ff5722;
     stroke-width: 4px;
 }
 
-/* Links along the final path */
 .path-highlight-link {
     stroke: #ff5722;
     stroke-width: 4px;
     stroke-dasharray: 5, 3;
 }
 
-/* Search‑tree “current/visited” highlight */
 #searchTreeSvg .node-group.highlighted .outer-circle {
     fill: orange !important;
 }
 
-/* Search‑tree goal highlight */
 #searchTreeSvg .node-group.goal-highlight .outer-circle {
     stroke: green;
     stroke-width: 3px;
 }
 
-
-/* Custom controls positioning */
 #toggleSidebar {
     position: absolute;
     top: 10px;
@@ -298,8 +291,8 @@ html, body {
 
 #traversalButtons {
     position: absolute;
-    top: 10px; /* adjust as needed */
-    right: 10px;  /* adjust as needed */
+    top: 10px;
+    right: 10px;
     z-index: 10;
 }
 
@@ -308,6 +301,31 @@ html, body {
     color: white;
     padding: 15px;
 }
+
+.legend-img {
+    height: 7vh;
+    width: auto;
+    max-width: 20vw;
+    margin-bottom: 1rem;
+}
+
+.my-large-step {
+    background-color: #42464a;
+    color: white;
+    padding: 15px;
+    max-width: 90vw;
+    width: auto;
+    height: auto;
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.legend-cell {
+    padding: 10px;
+    vertical-align: top;
+    text-align: center;
+}
+
 
 .introjs-tooltiptext{
     margin-top: 0;

@@ -668,6 +668,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const node2Select = document.getElementById("node2Select");
 
     function updateStartNodeSelect() {
+        const previous = startNodeSelect.value;
         startNodeSelect.innerHTML = "";
         node1Select.innerHTML = "";
         node2Select.innerHTML = "";
@@ -675,6 +676,9 @@ document.addEventListener("DOMContentLoaded", function() {
             const optStart = document.createElement("option");
             optStart.value = n.id;
             optStart.textContent = n.id;
+            if (String(n.id) === previous) {
+                optStart.selected = true;
+            }
             startNodeSelect.appendChild(optStart);
 
             const opt1 = document.createElement("option");
@@ -1216,6 +1220,74 @@ document.addEventListener("DOMContentLoaded", function() {
         const intro = introJs()
         intro.setOptions({
             steps: [
+                {
+                    intro: `
+                     <div style="text-align: center;">
+                        <div style="width: 800px; margin: 0 auto; font-family: Arial, sans-serif; text-align: center;">
+                          <p>
+                            This application is here to help you learn and explore different search algorithms. You can create and edit the graph as much as you want
+                            and then search it with the selected algorythm. <br>
+                            There is no "goal" in a gaming sense, and you cannot "fail". It is designed solely for education
+                          </p>
+                          <hr style="margin: 20px 0;">
+                          <table style="width: 100%; border-collapse: collapse;  table-layout: fixed; text-align: center;">
+                            <tr>
+                                <td class="legend-cell">
+                                    <strong>Node ID:</strong><br>
+                                    <img src="./assets/nodeId.png" alt="Node ID" class="legend-img"><br>
+                                    <p>The identifier for the node.</p>
+                                </td>
+                                <td class="legend-cell">
+                                    <strong>Node (Blue):</strong><br>
+                                    <img src="./assets/unvisitedNode.png" alt="Unvisited Node" class="legend-img"><br>
+                                    <p>A standard node that hasn’t been visited yet.</p>
+                                </td>
+                                <td class="legend-cell"">
+                                    <strong>Links:</strong><br>
+                                    <img src="./assets/linkedNode.png" alt="Linked Node" class="legend-img"><br>
+                                    <p>Indicates that nodes are connected.</p>
+                                </td>                            
+                            </tr>
+                                 <tr>
+                                 <td class="legend-cell">
+                                    <strong>Current Node (Green):</strong><br>
+                                    <img src="./assets/currentNode.png" alt="Current Node" class="legend-img"><br>
+                                    <p>The node currently being explored.</p>
+                                 </td>
+                                 <td class="legend-cell">
+                                    <strong>Visited Node (Orange):</strong><br>
+                                    <img src="./assets/visitedNode.png" alt="Visited Node" class="legend-img"><br>
+                                    <p>A node that has been explored previously.</p>
+                                 </td>
+                                 <td class="legend-cell">
+                                    <strong>Goal Node (Red):</strong><br>
+                                    <img src="./assets/goalNode.png" alt="Goal Node" class="legend-img"><br>
+                                    <p>The node the algorithm is attempting to find.</p>
+                                 </td>
+                                 </tr>
+                            <tr>
+                                 <td class="legend-cell">
+                                    <strong>Weight:</strong><br>
+                                    <img src="./assets/linkWeight.png" alt="Link Weight" class="legend-img"><br>
+                                    <p>Represents the cost (Think distance) to travel over the link (used for UCS and A*).</p>
+                                 </td>
+                                 <td class="legend-cell">
+                                    <strong>Heuristic:</strong><br>
+                                    <img src="./assets/heuristic.png" alt="Heuristic" class="legend-img"><br>
+                                    <p>An estimated cost to the goal node (only used in A*).</p>
+                                 </td>
+                                 <td class="legend-cell">
+                                    <strong>Highlighted Path:</strong><br>
+                                    <img src="./assets/highlightedPath.png" alt="Highlighted Path" class="legend-img"><br>
+                                    <p>Shows the path to the goal node once it has been found.</p>
+                                 </td>
+                            </tr>
+                          </table>
+                        </div>
+                     </div>
+                      `,
+                    tooltipClass: "my-large-step"
+                },
                 {   element: "#generateGraphForm",
                     intro: "Enter how many nodes you want and click Generate to build a new random graph.",
                     position: "right"
@@ -1225,23 +1297,23 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "right"
                 },
                 {   element: "#weightDiv",
-                    intro: "Toggle this to show or hide link weights on the graph.",
+                    intro: "Toggle this to show or hide link weights on the graph. Only used in UCS and A*",
                     position: "right"
                 },
                 {   element: "#heuristicToggleDiv",
-                    intro: "Toggle this to show or hide heuristics (H‑values) on each node.",
+                    intro: "Toggle this to show or hide heuristics (H‑values) on each node. Only used in A*",
                     position: "right"
                 },
                 {   element: "#toastToggleDiv",
                     intro: "Toggle this to hide the step by step pop-up explanation",
                     position: "right"
                 },
-                {   element: "#selectGoalDiv",
-                    intro: "Choose your goal node (or click Set Random Goal).",
-                    position: "right"
-                },
                 {   element: "#selectStartDiv",
                     intro: "Choose your starting node for all searches.",
+                    position: "right"
+                },
+                {   element: "#selectGoalDiv",
+                    intro: "Choose your goal node (or click Set Random Goal).",
                     position: "right"
                 },
                 {   element: "#AddNodeDiv",
