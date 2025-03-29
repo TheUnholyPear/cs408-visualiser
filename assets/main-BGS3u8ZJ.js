@@ -27,9 +27,9 @@ Expanded: [${S.join(", ")}]`,S),at(T,c)}T()}const Hn=document.getElementById("no
                      <div style="text-align: center;">
                         <div style="width: 50vw; margin: 0 auto; text-align: center;">
                           <p>
-                            This application is here to help you learn and explore different search algorithms. You can create and edit the graph as much as you want
-                            and then search it with the selected algorythm. <br>
-                            There is no "goal" in a gaming sense, and you cannot "fail". This is designed solely for education
+                         This application is designed to help you learn and explore various search algorithms. 
+                         You can freely create and edit graphs, then experiment with different search methods. 
+                         There’s no 'game' or risk of failure, it is purely for educational purposes.
                           </p>
                           <hr style="margin: 20px 0;">
                           <table style="width: 100%; border-collapse: collapse;  table-layout: fixed; text-align: center;">
