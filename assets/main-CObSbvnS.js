@@ -84,6 +84,14 @@ Expanded: [${S.join(", ")}]`,S),at(T,c)}T()}const Hn=document.getElementById("no
                                     <p>Shows the path to the goal node once it has been found.</p>
                                  </td>
                             </tr>
+                            <tr class="justify-content-center">
+                                 <td colspan="3" class="legend-cell">
+                                    <strong>Activated Node:</strong><br>
+                                    <img src="./assets/activatedNode.png" alt="Highlighted Path" class="legend-img"><br>
+                                    <p>Click a node to activate it. The activated nodes are only for determining what
+                                     node to delete, or what nodes are connected when adding a node</p>
+                                 </td>
+                            </tr>
                           </table>
                         </div>
                      </div>
