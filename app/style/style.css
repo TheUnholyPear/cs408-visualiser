@@ -150,7 +150,7 @@ html, body {
 }
 
 #stepsList .step-button {
-    background-color: #20c997;
+    background-color: #0a9396;
     color: #fff;
     border: none;
     padding: 0.5rem 1rem;
@@ -164,8 +164,17 @@ html, body {
     font-size: 14px;
 }
 
+#speedSlider::-webkit-slider-thumb {
+    background-color: #E9D8A6;
+    border: 2px solid #005f73;
+}
+
 #stepsList .step-button:hover {
-    background-color: #0f5132;
+    background-color: #005f73;
+}
+
+#stepsList .step-button.active {
+    background-color: #ee9b00;
 }
 
 #stepsList .step-button:disabled {
@@ -303,11 +312,14 @@ html, body {
 }
 
 .legend-img {
-    height: 7vh;
+    max-width: 90%;
+    max-height: 7vh;
     width: auto;
-    max-width: 20vw;
+    height: auto;
+    object-fit: contain;
     margin-bottom: 1rem;
 }
+
 
 .my-large-step {
     background-color: #42464a;
@@ -360,7 +372,7 @@ html, body {
     z-index: 2100;
     padding: .5rem 1rem;
     border-radius: 4px 0 0 4px;
-    background: #20c997;
+    background: cadetblue;
     color: #fff;
     border: none;
     cursor: pointer;

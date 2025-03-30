@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let selectedAlgorithm = null;
     let stepDelay = parseInt(document.getElementById("speedSlider").value, 10);
 
-    let showWeightsFlag = true;
+    let showWeightsFlag = false;
     let showHeuristicsFlag = false;
     let randomizeWeightsFlag = true;
 
@@ -148,6 +148,8 @@ document.addEventListener("DOMContentLoaded", function() {
         updatePositions();
         updateStartNodeSelect();
         updateGoalNodeSelect();
+        updateWeightsVisibility(showWeightsFlag)
+        updateHeuristicVisibility(showHeuristicsFlag)
     }
 
     // --------- Graph Generation Function ---------
@@ -511,10 +513,12 @@ document.addEventListener("DOMContentLoaded", function() {
         button.textContent = step.message;
         button.classList.add("step-button");
         if (step.snapshot) {
-            button.addEventListener("click", () => {
+            button.addEventListener("click", (e) => {
                 stopAlgorithm();
                 loadSnapshot(step.snapshot);
                 currentStepIndex = Array.from(stepsList.children).indexOf(li);
+                document.querySelectorAll("#stepsList .step-button").forEach(btn => btn.classList.remove("active"));
+                e.target.classList.add("active");
             });
         } else {
             button.disabled = true;
@@ -559,7 +563,9 @@ document.addEventListener("DOMContentLoaded", function() {
         clearSearchTree();
         currentStepToast.hide();
         currentPath = null;
-        if (isAlgorithmRunning) logStep("Algorithm Stopped.");
+        if (isAlgorithmRunning) {
+            logStep("Algorithm Stopped.");
+        }
         isAlgorithmRunning = false;
     }
 
@@ -791,7 +797,6 @@ document.addEventListener("DOMContentLoaded", function() {
         simulation.alpha(0).stop();
         drawGraph();
         updateGoalNodeSelect();
-        showLinkWeights(showWeightsFlag)
     }
 
     function deleteNode(nodeId) {
@@ -1234,58 +1239,58 @@ document.addEventListener("DOMContentLoaded", function() {
                                 <tr>
                                     <td class="legend-cell">
                                         <strong>Node ID:</strong><br>
-                                        <img src="./assets/nodeId.png" alt="Node ID" class="legend-img"><br>
+                                        <img src="./assets/nodeId.png" alt="Node ID" class="legend-img border rounded"><br>
                                         <p>The identifier for the node.</p>
                                     </td>
                                     <td class="legend-cell">
                                         <strong>Node (Blue):</strong><br>
-                                        <img src="./assets/unvisitedNode.png" alt="Unvisited Node" class="legend-img"><br>
+                                        <img src="./assets/unvisitedNode.png" alt="Unvisited Node" class="legend-img border rounded"><br>
                                         <p>A standard node that hasn’t been visited yet.</p>
                                     </td>
                                     <td class="legend-cell"">
                                         <strong>Links:</strong><br>
-                                        <img src="./assets/linkedNode.png" alt="Linked Node" class="legend-img"><br>
+                                        <img src="./assets/linkedNode.png" alt="Linked Node" class="legend-img border rounded"><br>
                                         <p>Indicates that nodes are connected.</p>
                                     </td>                            
                                 </tr>
                                 <tr>
                                     <td class="legend-cell">
                                         <strong>Current Node (Green):</strong><br>
-                                        <img src="./assets/currentNode.png" alt="Current Node" class="legend-img"><br>
+                                        <img src="./assets/currentNode.png" alt="Current Node" class="legend-img border rounded"><br>
                                         <p>The node currently being explored.</p>
                                     </td>
                                     <td class="legend-cell">
                                         <strong>Visited Node (Orange):</strong><br>
-                                        <img src="./assets/visitedNode.png" alt="Visited Node" class="legend-img"><br>
+                                        <img src="./assets/visitedNode.png" alt="Visited Node" class="legend-img border rounded"><br>
                                         <p>A node that has been explored previously.</p>
                                     </td>
                                     <td class="legend-cell">
                                         <strong>Goal Node (Red):</strong><br>
-                                        <img src="./assets/goalNode.png" alt="Goal Node" class="legend-img"><br>
+                                        <img src="./assets/goalNode.png" alt="Goal Node" class="legend-img border rounded"><br>
                                         <p>The node the algorithm is attempting to find.</p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="legend-cell">
                                         <strong>Weight:</strong><br>
-                                        <img src="./assets/linkWeight.png" alt="Link Weight" class="legend-img"><br>
+                                        <img src="./assets/linkWeight.png" alt="Link Weight" class="legend-img border rounded"><br>
                                         <p>Represents the cost (Think distance) to travel over the link (used for UCS and A*).</p>
                                     </td>
                                     <td class="legend-cell">
                                         <strong>Heuristic:</strong><br>
-                                        <img src="./assets/heuristic.png" alt="Heuristic" class="legend-img"><br>
+                                        <img src="./assets/heuristic.png" alt="Heuristic" class="legend-img border rounded"><br>
                                         <p>An estimated cost to the goal node (only used in A*).</p>
                                     </td>
                                     <td class="legend-cell">
                                         <strong>Highlighted Path:</strong><br>
-                                        <img src="./assets/highlightedPath.png" alt="Highlighted Path" class="legend-img"><br>
+                                        <img src="./assets/highlightedPath.png" alt="Highlighted Path" class="legend-img border rounded"><br>
                                         <p>Shows the path to the goal node once it has been found.</p>
                                     </td>
                                 </tr>
                                 <tr class="justify-content-center">
                                     <td colspan="3" class="legend-cell">
                                         <strong>Activated Node:</strong><br>
-                                        <img src="./assets/activatedNode.png" alt="Highlighted Path" class="legend-img"><br>
+                                        <img src="./assets/activatedNode.png" alt="Highlighted Path" class="legend-img border rounded"><br>
                                         <p>Click a node to activate it. The activated nodes are only for determining what
                                          node to delete, or what nodes are connected when adding a node</p>
                                     </td>
@@ -1305,15 +1310,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "right"
                 },
                 {   element: "#weightDiv",
-                    intro: "Toggle this to show or hide link weights on the graph. Only used in UCS and A*",
+                    intro: "Toggle this to show or hide link weights (the cost to travel a link) on the graph. Only used in UCS and A*",
                     position: "right"
                 },
                 {   element: "#heuristicToggleDiv",
-                    intro: "Toggle this to show or hide heuristics (H‑values) on each node. Only used in A*",
+                    intro: "Toggle this to show or hide heuristics (H‑values - estimated distance to the goal) on each node. Only used in A*",
                     position: "right"
                 },
                 {   element: "#toastToggleDiv",
-                    intro: "Toggle this to hide the step by step pop-up explanation",
+                    intro: "Toggle this to hide the step by step pop-up explanation.",
                     position: "right"
                 },
                 {   element: "#selectStartDiv",
@@ -1325,7 +1330,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "right"
                 },
                 {   element: "#AddNodeDiv",
-                    intro: "Click Add or Delete to modify nodes. Activate a parent by clicking its inner circle first.",
+                    intro: "Click Add or Delete to modify nodes. Activate nodes to delete or connect to new node by clicking its inner circle first.",
                     position: "right"
                 },
                 {   element: "#randomizeWeightsDiv",
@@ -1349,7 +1354,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "bottom"
                 },
                 {   element: "#runAlgorithmBtn",
-                    intro: "Run the selected algorithm — watch the traversal animate!",
+                    intro: "Run the selected algorithm to watch the traversal animate!",
                     position: "bottom"
                 },
                 {   element: "#getInfoBtn",
@@ -1361,11 +1366,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "top"
                 },
                 {   element: ".backStep",
-                    intro: "Step backwards through the algorithm history.",
+                    intro: "Step backwards through the algorithm history (History Tab)." +
+                        "Note that clicking this mid exploration will cause it to halt. You will need to restart the exploration" +
+                        "if you want to continue",
                     position: "top"
                 },
                 {   element: ".forwardStep",
-                    intro: "Step forwards through the algorithm history.",
+                    intro: "Step forwards through the algorithm history (History Tab). " +
+                        "Note that clicking this mid exploration will cause it to halt. You will need to restart the exploration" +
+                        "if you want to continue",
                     position: "top"
                 },
                 {   element: "#graphSvg",
@@ -1373,7 +1382,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "top"
                 },
                 {   element: "#steps-tab",
-                    intro: "This is the History Tab button. Click here to view your past actions.",
+                    intro: "This is the History Tab button. Click here to view past steps. You can also load state from here " +
+                        "and view it in either the search tree or graph",
                     position: "bottom"
                 },
                 {   element: "#toggleTreeBtn",
@@ -1381,7 +1391,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     position: "left"
                 },
                 {   element: "#searchTreePanel",
-                    intro: "This is where the search tree is displayed — it visualizes the traversal tree with statistics.",
+                    intro: "This is where the search tree is displayed — it visualizes the traversal tree with statistics." +
+                        "It Can be using in conjunction with the graph or history tab",
                     position: "left"
                 }
             ],
@@ -1529,6 +1540,9 @@ document.addEventListener("DOMContentLoaded", function() {
         btn.addEventListener('click', () => {
             if (currentStepIndex > 0) {
                 currentStepIndex--;
+                document.querySelectorAll("#stepsList .step-button").forEach(btn => btn.classList.remove("active"));
+                const buttonAtIndex = stepsList.children[currentStepIndex].querySelector(".step-button");
+                buttonAtIndex.classList.add("active");
                 loadSnapshot(historySteps[currentStepIndex].snapshot);
             } else alert("No previous step available.");
         })
@@ -1537,6 +1551,9 @@ document.addEventListener("DOMContentLoaded", function() {
         btn.addEventListener('click', () => {
             if (currentStepIndex < historySteps.length - 1) {
                 currentStepIndex++;
+                document.querySelectorAll("#stepsList .step-button").forEach(btn => btn.classList.remove("active"));
+                const buttonAtIndex = stepsList.children[currentStepIndex].querySelector(".step-button");
+                buttonAtIndex.classList.add("active");
                 loadSnapshot(historySteps[currentStepIndex].snapshot);
             } else alert("No next step available.");
         })
@@ -1612,12 +1629,15 @@ document.addEventListener("DOMContentLoaded", function() {
             drawGraph();
             alert("Link weight updated.");
         } else {
-            links.push({ source: nodes[node1], target: nodes[node2], weight: newWeight });
+            links.push({ source: getNode(node1), target: getNode(node2), weight: newWeight });
             buildAdjacency();
             maybeUpdateHeuristics()
             drawGraph();
             alert("Link did not exist, so it was created.");
         }
+        simulation.nodes(nodes);
+        simulation.force("link").links(links);
+        simulation.alpha(0).stop();
     });
 
     // Remove Link Event
@@ -1660,10 +1680,9 @@ document.addEventListener("DOMContentLoaded", function() {
             </p>
 
             <h4 class="text-center"><u><strong>Example</strong></u></h4>
-            <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
+            <p>Consider the following graph with nodes 0, 1, 2, and 3:</p>
             <div class="text-center">
-                <img src="./assets/BFS.png" alt="BFS illustration" class="border rounded w-50">
-                <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
+                <img src="./assets/BFS.png" alt="BFS illustration" class="border mb-3 rounded w-50">
             </div>
             
             <p>Starting from node 0:</p>
@@ -1688,10 +1707,9 @@ document.addEventListener("DOMContentLoaded", function() {
             </p>
             
             <h4 class="text-center"><u><strong>Example</strong></u></h4>
-            <p>Consider the following graph with nodes 0, 1, 2, and 4:</p>
+            <p>Consider the following graph with nodes 0, 1, 2, and 3:</p>
             <div class="text-center">
-                <img src="./assets/DFS.png" alt="DFS illustration" class="border rounded w-50 mx-auto d-block">
-                <p>Graph: 0 → 1, 0 → 2, 1 → 3</p>
+                <img src="./assets/DFS.png" alt="DFS illustration" class="border mb-3 rounded w-50 mx-auto d-block">
             </div>
             
             <p>Starting from node 0:</p>
@@ -1708,80 +1726,80 @@ document.addEventListener("DOMContentLoaded", function() {
                 html = `
                 <h3>Uniform Cost Search (UCS)</h3>
                 <p>
-                Uniform Cost Search (UCS) is similar to BFS, but it considers the <u>total cost of paths</u> rather than just the number of steps.<br><br>
+                Uniform Cost Search (UCS) is similar to BFS, but it considers the <u>cost</u> of a path (Think distance). The cost is the 
+                <strong><u>weight</u></strong> value attached to the links (May need to be added).<br><br>
                 
-                At each step, UCS expands the node with the <strong>lowest cumulative cost</strong> from the start node.<br><br>
+                At each step, UCS expands the node with the <strong>lowest total cost</strong> from the start node.<br><br>
                 
                 This makes UCS ideal for finding the <strong>least-cost path</strong> in a <u>weighted graph</u>, where some paths may be longer but cheaper.
                 </p>
                 
                 <h4 class="text-center"><u><strong>Example</strong></u></h4>
-                <p>Consider the following graph:</p>
+                <p>Consider the following graph with nodes 0, 1, 2, 3 and 4:</p>
                 
                 <div class="text-center">
-                    <img src="./assets/UCS.png" alt="UCS illustration" class="border rounded w-50 mx-auto d-block">
-                    <p> Graph: <br>
-                        0 → 1 (weight 20),
-                        0 → 2 (weight 5),
-                        2 → 3 (weight 5),
-                        3 → 4 (weight 5),
-                        1 → 4 (weight 4)</p>
+                    <img src="./assets/UCS.png" alt="UCS illustration" class="border mb-3 rounded w-50 mx-auto d-block">
                 </div>
                 
-                <p>Starting from node 0, UCS proceeds as follows:</p>
+                <p>Starting from node 0, UCS would proceed as follows:</p>
                 <ul>
-                  <li>Explore 0 → 2 (cost 5) first, since it's the lowest cost.</li>
+                  <li>Explore 0 → 2 (cost 5) first, since it's the lowest cost option.</li>
                   <li>Then from 2 → 3 (cost 5) Total cost: 10)</li>
                   <li>Then from 3 → 4 (cost 5) total cost: 15)</li>
                   <li>Lastly, 0 → 1 (cost 19) </li>
-                  <li>0 → 1 (cost 19) is less than the cost from 4 → 1 (Cost 5) Total Cost: 20</li>
+                  <li>0 → 1 (Total Cost: 19) is less than the cost from 0 → 2 → 3 → 4 → 1 (Total Cost: 20)</li>
                 </ul>
                 
-                <p><strong>The order of visits would be:</strong><br>
-                0 → 2, 2 → 3, 3 → 4, 0 → 1</p>
+                <p><strong>The order of traversal would be:</strong><br>
+                0 → 2 → 3 → 4, 0 → 1</p>
                         `;
                 break;
             case "aStar":
                 html = `
-                <h3>A* Search</h3>
+                <h3>AStar (A*)</h3>
                 <p>
-                A* Search is an informed search algorithm that selects the next node to expand based on both the <u>cost</u> 
-                and the <u>estimate of the remaining cost to reach the goal <strong>(heuristic)</strong></u>. A goal is needed to generate the heuristic.
+                A* is an <strong><u>Informed Search</u></strong>. This means that it has additional information 
+                about the problem, this is called the <strong><u>Heuristic</u></strong>. The heuristic is generated separately
+                from A* and provided to it. 
+                </p>
+                     
+                <p>
+                A heuristic is only <strong>admissible</strong> (valid) when it never overestimates the true cost to reach the 
+                goal from the node with the heuristic value. This ensures that A* finds the least‑cost path without exploring 
+                unnecessary routes. To generate the heuristic a goal is needed. How this tool generates the heuristic is that it finds
+                the lowest weighted link in the entire graph, and then multiplies that value based on how far away a node is 
+                from the goal.
                 </p>
                 
                 <p>
-                A heuristic is <strong>admissible</strong> when it never overestimates the true cost to reach the 
-                goal. This ensures that A* finds the least‑cost path without exploring unnecessary routes.
+                A* is similar to Uniform-Cost-Search (UCS), it selects the next node to expand based on both the <u>cost</u> 
+                and the <u>heuristic</u>. A* simply adds them together and chooses the lowest value node to explore next. 
                 </p>
+                    <p>Consider the following graph :</p>
                 
                 <h4 class="text-center"><u><strong>Example</strong></u></h4>
-                <p>In the graph below, the goal node is <strong>node 1</strong>:</p>
+                <p>In the following graph with nodes 0, 1, 2, 3 and 4. The goal node is <strong>node 1</strong>:</p>
                 
                 <div class="text-center">
-                    <img src="./assets/ASTAR.png" alt="A* illustration" class="border rounded w-50 mx-auto d-block">
-                    <p>Graph: <br>
-                0 → 1 (weight 19),
-                0 → 2 (weight 5),
-                2 → 3 (weight 5),
-                3 → 4 (weight 5),
-                4 → 1 (weight 5)
-                    </p>
+                    <img src="./assets/ASTAR.png" alt="A* illustration" class="border rounded mb-3 w-50 mx-auto d-block">
                 </div>
                 
-                <p>The heuristic estimates cost to reach node 1 (goal) are:</p>
+                <p>The heuristic estimates cost to reach the goal (Node 1). The lowest weighted link in this graph is 5.
+                The heuristic then is 5 times the distance from the goal node:</p>
                 <ul>
                   <li>Node 0: heuristic 5</li>
                   <li>Node 2: heuristic 10</li>
                   <li>Node 3: heuristic 10</li>
                   <li>Node 4: heuristic 5</li>
-                  <li>Node 1 (goal): heuristic 0</li>
+                  <li>Node 1 (Goal): heuristic 0</li>
                 </ul>
                 
-                <p>Starting from node 0, A* expands nodes in order of: combined total cost (cost) + estimated remaining cost (heuristic):</p>
+                <p>Starting from node 0, A* proceeds as follows: f = (Total Cost + Heuristic):</p>
                 <ul>
-                  <li>First expand 0 → 2 (cost(5) + heuristic(10) = 15).</li>
-                  <li>Then expand 0 → 1 (cost(19) + heuristic(0) = 19).</li>
-                  <li>0 → 1 (cost(19) + heuristic(0) = 19) is less than the cost from 2 → 3 (cost(10) + heuristic(10) = 20)</li>
+                  <li>First expands 0 → 2 (cost: 5 + heuristic: 10) = 15.</li>
+                  <li>Then 0 → 1 (cost: 19 + heuristic: 0) = 19.</li>
+                  <li>Goal Found!</li>
+                  <li>We go from 0 → 1 (f = 19) since the f-value from 2 → 3 (cost: 10 + heuristic: 10 = 20) is higher.</li>
                 </ul>
                 
                 <p><strong>The order of visits is:</strong><br>
