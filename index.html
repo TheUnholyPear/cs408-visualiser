@@ -3,26 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CS408 Project</title>
-  <script type="module" crossorigin src="/cs408-visualiser/assets/main-DzukMZ7_.js"></script>
-  <link rel="stylesheet" crossorigin href="/cs408-visualiser/assets/main-vKZY9zMb.css">
+  <title>Interactive learning for AI Search Algorithms</title>
+  <script type="module" crossorigin src="/cs408-visualiser/assets/main-CrDOywbf.js"></script>
+  <link rel="stylesheet" crossorigin href="/cs408-visualiser/assets/main-JRX71i6k.css">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="./index.html">CS408 Project</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-            aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link active" href="./index.html">Sandbox</a>
-        </li>
-      </ul>
-    </div>
+  <div class="container-fluid justify-content-center">
+    <a class="navbar-brand" href="./index.html">Interactive Tool For AI Search Algorithms</a>
   </div>
 </nav>
 
@@ -30,7 +18,7 @@
 <div class="main-container d-flex">
   <div class="sidebar overflow-x-hidden p-3 bg-light" id="sidebar">
 
-    <button id="tutorialBtn" class="w-100 btn btn-info">
+    <button id="tutorialBtn" class="w-100 btn" style="background-color: #ee9b00; color: black">
       <span class="h5">Tutorial</span>
     </button>
 
@@ -65,20 +53,20 @@
           <input class="form-check-input" type="checkbox" id="includeWeights" checked>
           <label class="form-check-label" for="includeWeights">Include Random Weights</label>
         </div>
-        <button type="submit" class="w-100 btn btn-success">Generate</button>
+        <button type="submit" class="w-100 btn" style="background-color: #0a9396; color: white">Generate</button>
       </form>
-      <button id="sortGraphBtn" class="w-100 btn btn-warning">Sort Graph</button>
+      <button id="sortGraphBtn" class="w-100 btn" style="background-color: #94d2bd; color: black">Sort Graph</button>
     </div>
 
     <hr/>
 
     <div class="d-flex justify-content-center align-items-center form-check form-switch" id="weightDiv">
-      <input class="form-check-input" type="checkbox" id="toggleWeightsSwitch" checked>
+      <input class="form-check-input" type="checkbox" id="toggleWeightsSwitch">
       <label class="form-check-label ms-2" for="toggleWeightsSwitch">Show Weights</label>
     </div>
 
     <div class="d-flex justify-content-center align-items-center form-check form-switch" id="heuristicToggleDiv">
-      <input class="form-check-input" type="checkbox" id="toggleHeuristicSwitch" checked>
+      <input class="form-check-input" type="checkbox" id="toggleHeuristicSwitch">
       <label class="form-check-label ms-2" for="toggleHeuristicSwitch">Show Heuristics</label>
     </div>
 
@@ -106,7 +94,7 @@
            <!-- Filled in by JS -->
           </select>
         </div>
-        <button id="randomGoalBtn" class="btn btn-primary w-100">Set Random Goal</button>
+        <button id="randomGoalBtn" class="btn w-100" style="background-color: #0a9396; color: white">Set Random Goal</button>
       </div>
     </div>
 
@@ -116,10 +104,10 @@
       <h5 class="mb-3 text-center">Add a Node</h5>
       <div class="d-flex justify-content-center align-items-center gap-2">
         <form id="addNodeForm">
-          <button class="btn btn-primary" type="submit">Add Node</button>
+          <button class="btn" type="submit" style="background-color: #0a9396; color: white">Add Node</button>
         </form>
         <form id="deleteNodeForm">
-          <button class="btn btn-danger" type="submit">Delete Node</button>
+          <button class="btn" type="submit" style="background-color: #c12617; color: white">Delete Node</button>
         </form>
       </div>
       <div class="d-flex justify-content-center align-items-center form-check form-switch mt-3" id="randomizeWeightsDiv">
@@ -145,8 +133,8 @@
         <p class="text-center m-0">New Weight:</p>
         <input type="number" id="newWeightInput" class="form-control" placeholder="Enter new weight">
 
-        <button id="updateLinkBtn" class="w-100 btn btn-primary">Update Link Weight</button>
-        <button id="removeLinkBtn" class="w-100 btn btn-danger mt-2">Remove Link</button>
+        <button id="updateLinkBtn" class="w-100 btn" style="background-color: #0a9396; color: white">Update Link Weight</button>
+        <button id="removeLinkBtn" class="w-100 btn mt-2" style="background-color: #c12617; color: white">Remove Link</button>
       </div>
     </div>
 
@@ -196,18 +184,18 @@
           </button>
 
           <div class="navControls">
-            <button class="btn backStep btn-secondary">Back</button>
+            <button class="btn backStep btn-secondary">Backward</button>
             <button class="btn forwardStep btn-secondary">Forward</button>
           </div>
 
-          <div class="m-0 d-flex align-items-center bg-info" id="speedControls">
+          <div class="m-0 d-flex align-items-center" id="speedControls" style="background-color: #0a9396; color: white">
             <p class="mb-0 me-2 align-items-center flex-grow-0">Speed:</p>
             <input type="range" id="speedSlider" class="flex-shrink-1 form-range" min="0" max="2000" step="100" value="1000" style="transform: scaleX(-1); width: 120px;">
           </div>
           <div id="traversalButtons" class="d-flex align-items-center gap-2">
             <div class="btn-group" role="group" aria-label="Algorithm Controls">
               <div class="btn-group" role="group">
-                <button class="btn btn-info dropdown-toggle" type="button" id="algorithmDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn dropdown-toggle" type="button" style="background-color: #94d2bd; color: black" id="algorithmDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                   Select Algorithm
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="algorithmDropdown">
@@ -218,8 +206,8 @@
                 </ul>
               </div>
 
-              <button class="btn btn-primary" id="runAlgorithmBtn">Run</button>
-              <button id="getInfoBtn" class="btn btn-warning">Explanation</button>
+              <button class="btn" style="background-color: #02677c; color: #fff" id="runAlgorithmBtn">Run</button>
+              <button id="getInfoBtn"  class="btn" style="background-color: #ee9b00; color: black">Explanation</button>
             </div>
           </div>
 
