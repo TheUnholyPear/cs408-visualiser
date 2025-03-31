@@ -24,7 +24,7 @@ Heuristic = ${Nt(B)}
 f‑value = ${b+Nt(B)}`,N),B===m){let C=[B];for(;C[0]!==h;)C.unshift(j[C[0]]);i=C,Gt(C),W(`A*: Goal reached! Path: ${C.join(" -> ")}`,N),a=!1;return}(r[B]||[]).forEach(C=>{const M=e.find(tt=>tt.source.id===B&&tt.target.id===C||tt.target.id===B&&tt.source.id===C);if(!M)return;const Q=b+M.weight,Z=A[C]??"none";if(A[C]===void 0||Q<A[C]){A[C]=Q,j[C]=B;const tt=J(C);tt&&tt.discoveryIndex===void 0&&(tt.discoveryIndex=v++),E.push({node:C,cost:Q}),le(C,Q),at(()=>ce(C,Q),c-1),W(Z!=="none"?`A*: Reopening node [${C}], Updating g from ${Z} to ${Q}`:`A*: Discovered node [${C}] with Cost = ${Q}`,N)}}),W(`A*: Frontier: [${E.map(C=>`${C.node}(${C.cost+Nt(C.node)})`).join(", ")}], 
 Discovered: [${Object.keys(A).join(", ")}], 
 Expanded: [${N.join(", ")}]`,N),at(I,c)}I()}const Hn=document.getElementById("nodeCountInput");document.getElementById("generateGraphForm").addEventListener("submit",h=>{ot(),ut(),Ve(),h.preventDefault();let m=parseInt(Hn.value,10);m<1||(Rt(m),Hn.value="")}),document.getElementById("tutorialBtn").addEventListener("click",()=>{const h=pn();h.setOptions({steps:[{intro:`
-                     <div style="text-align: center;">
+                     <div class="d-flex align-items-center justify-content-center">
                         <div style="width: 50vw; margin: 0 auto; text-align: center;">
                             <p>
                             This application is designed to help you learn and explore various search algorithms. 
