@@ -1,5 +1,6 @@
 html, body {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .navbar {
@@ -9,12 +10,6 @@ html, body {
     width: 100%;
     height: 5vh;
 }
-
-.sidebar--hidden {
-    display: none !important;
-}
-
-
 
 .main-container {
     margin-top: 5vh;
@@ -26,17 +21,22 @@ html, body {
 .sidebar {
     width: 20vw;
     min-width: 8vw;
-    max-width: 33vw;
+    max-width: 40vw;
     height: 95vh;
     overflow-y: auto;
     border-right: 2px solid #ccc;
     transition: width 0.2s;
-    position: relative;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
+.sidebar--hidden {
+    display: none !important;
+}
+
 
 #sidebarResizer {
     width: 6px;
-    height: 100vh;
+    height: 95vh;
     cursor: ew-resize;
     background-color: #aaa;
     position: relative;
@@ -370,6 +370,7 @@ html, body {
     right: 0;
     transform: translate(0, -50%);
     z-index: 2100;
+    display: block;
     padding: .5rem 1rem;
     border-radius: 4px 0 0 4px;
     background: cadetblue;
@@ -380,4 +381,38 @@ html, body {
 }
 .tree-toggle-btn:hover {
     background: #17a589;
+}
+
+:root {
+    --sidebar-width: 40vw;
+}
+@media (orientation: portrait) {
+    #searchTreePanel {
+        position: absolute;
+        left: var(--sidebar-width);
+        right: 0;
+        bottom: 0;
+        height: 45vh;
+        overflow: hidden;
+        background: #e9ecef;
+        border: 5px solid cadetblue;
+        z-index: 1500;
+        transform: translateY(0);
+    }
+
+    .sidebar {
+        width: 40vw !important;
+        transition: width -1s !important;
+    }
+    .tab-content {
+        flex: 0 0 45vh;
+        height: 45vh;
+    }
+
+    #sidebarResizer {
+        display: none !important;
+    }
+    .tree-toggle-btn {
+        display: none !important;
+    }
 }

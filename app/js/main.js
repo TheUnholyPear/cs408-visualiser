@@ -1227,7 +1227,7 @@ document.addEventListener("DOMContentLoaded", function() {
             steps: [
                 {
                     intro: `
-                     <div style="text-align: center;">
+                     <div class="d-flex align-items-center justify-content-center">
                         <div style="width: 50vw; margin: 0 auto; text-align: center;">
                             <p>
                             This application is designed to help you learn and explore various search algorithms. 
@@ -1822,11 +1822,17 @@ document.addEventListener("DOMContentLoaded", function() {
     const sidebar = document.getElementById("sidebar");
     const toggleButton = document.getElementById("toggleSidebar");
     toggleButton.addEventListener("click", () => {
-        sidebar.classList.toggle("sidebar--hidden");
-        resizer.classList.toggle("sidebar--hidden");
-        toggleButton.textContent = sidebar.classList.contains("sidebar--hidden")
-            ? "Show Sidebar"
-            : "Hide Sidebar";
+        if (!sidebar.classList.contains("sidebar--hidden")) {
+            sidebar.classList.add("sidebar--hidden");
+            resizer.classList.add("sidebar--hidden");
+            toggleButton.textContent = "Show Sidebar";
+            document.documentElement.style.setProperty('--sidebar-width', '0px');
+        } else {
+            sidebar.classList.remove("sidebar--hidden");
+            resizer.classList.remove("sidebar--hidden");
+            toggleButton.textContent = "Hide Sidebar";
+            document.documentElement.style.setProperty('--sidebar-width', '40vw');
+        }
         resizeGraph();
     });
     const resizer = document.getElementById("sidebarResizer");
@@ -1867,9 +1873,11 @@ document.addEventListener("DOMContentLoaded", function() {
         if (panelOpen) {
             sidebar.classList.add('sidebar--hidden');
             resizer.classList.add('sidebar--hidden');
+            document.documentElement.style.setProperty('--sidebar-width', '0px');
         } else {
             sidebar.classList.remove('sidebar--hidden');
             resizer.classList.remove('sidebar--hidden');
+            document.documentElement.style.setProperty('--sidebar-width', '40vw');
         }
         document.querySelector('.main-content').classList.toggle('shift', panelOpen);
         drawGraph();
