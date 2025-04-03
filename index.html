@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Interactive learning for AI Search Algorithms</title>
-  <script type="module" crossorigin src="/cs408-visualiser/assets/main-DW43o0_j.js"></script>
-  <link rel="stylesheet" crossorigin href="/cs408-visualiser/assets/main-2vx3NrTj.css">
+  <script type="module" crossorigin src="/cs408-visualiser/assets/main-tiiKtcUI.js"></script>
+  <link rel="stylesheet" crossorigin href="/cs408-visualiser/assets/main-BlZU1OnY.css">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -179,19 +179,24 @@
           </svg>
 
 
+
+          <div id="bottomControls">
+            <div class="m-0 d-flex align-items-center" id="speedControls" style="background-color: #0a9396; color: white">
+              <p class="mb-0 me-2 align-items-center flex-grow-0">Speed:</p>
+              <input type="range" id="speedSlider" class="flex-shrink-1 form-range" min="0" max="2000" step="100" value="1000" style="transform: scaleX(-1); width: 120px;">
+            </div>
+
+            <div class="navControls">
+              <button class="btn backStep btn-secondary">Backward</button>
+              <button class="btn forwardStep btn-secondary">Forward</button>
+            </div>
+          </div>
+
+
           <button id="toggleSidebar" class="btn btn-sm btn-outline-secondary">
             Hide Sidebar
           </button>
 
-          <div class="navControls">
-            <button class="btn backStep btn-secondary">Backward</button>
-            <button class="btn forwardStep btn-secondary">Forward</button>
-          </div>
-
-          <div class="m-0 d-flex align-items-center" id="speedControls" style="background-color: #0a9396; color: white">
-            <p class="mb-0 me-2 align-items-center flex-grow-0">Speed:</p>
-            <input type="range" id="speedSlider" class="flex-shrink-1 form-range" min="0" max="2000" step="100" value="1000" style="transform: scaleX(-1); width: 120px;">
-          </div>
           <div id="traversalButtons" class="d-flex align-items-center gap-2">
             <div class="btn-group" role="group" aria-label="Algorithm Controls">
               <div class="btn-group" role="group">
