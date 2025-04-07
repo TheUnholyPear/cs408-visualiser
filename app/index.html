@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Interactive learning for AI Search Algorithms</title>
   <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="./style/introjs.css" />
@@ -149,8 +149,6 @@
     </div>
   </div>
 
-
-  <!-- Resizer Handle -->
   <div id="sidebarResizer"></div>
 
   <!-- main tabs -->
@@ -180,42 +178,48 @@
           </svg>
 
 
-          <button id="toggleSidebar" class="btn btn-sm btn-outline-secondary">
-            Hide Sidebar
-          </button>
 
-          <div class="navControls">
-            <button class="btn backStep btn-secondary">Backward</button>
-            <button class="btn forwardStep btn-secondary">Forward</button>
+          <div id="bottomControls">
+            <div class="m-0 d-flex align-items-center" id="speedControls" style="background-color: #0a9396; color: white">
+              <p class="mb-0 me-2 align-items-center flex-grow-0">Speed:</p>
+              <input type="range" id="speedSlider" class="flex-shrink-1 form-range" min="0" max="2000" step="100" value="1000" style="transform: scaleX(-1); width: 120px;">
+            </div>
+
+            <div class="navControls">
+              <button class="btn backStep btn-secondary">Backward</button>
+              <button class="btn forwardStep btn-secondary">Forward</button>
+            </div>
           </div>
 
-          <div class="m-0 d-flex align-items-center" id="speedControls" style="background-color: #0a9396; color: white">
-            <p class="mb-0 me-2 align-items-center flex-grow-0">Speed:</p>
-            <input type="range" id="speedSlider" class="flex-shrink-1 form-range" min="0" max="2000" step="100" value="1000" style="transform: scaleX(-1); width: 120px;">
-          </div>
-          <div id="traversalButtons" class="d-flex align-items-center gap-2">
-            <div class="btn-group" role="group" aria-label="Algorithm Controls">
-              <div class="btn-group" role="group">
-                <button class="btn dropdown-toggle" type="button" style="background-color: #94d2bd; color: black" id="algorithmDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                  Select Algorithm
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="algorithmDropdown">
-                  <li><a class="dropdown-item" href="#" data-algorithm="bfs">BFS</a></li>
-                  <li><a class="dropdown-item" href="#" data-algorithm="dfs">DFS</a></li>
-                  <li><a class="dropdown-item" href="#" data-algorithm="ucs">UCS</a></li>
-                  <li><a class="dropdown-item" href="#" data-algorithm="aStar">A*</a></li>
-                </ul>
+          <div id="topControls">
+            <button id="toggleSidebar" class="btn btn-sm btn-outline-secondary">
+              Hide Sidebar
+            </button>
+
+            <div id="traversalButtons" class="d-flex align-items-center gap-2">
+              <div class="btn-group" role="group" aria-label="Algorithm Controls">
+                <div class="btn-group" role="group">
+                  <button class="btn dropdown-toggle" type="button" style="background-color: #94d2bd; color: black" id="algorithmDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Algorithm
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="algorithmDropdown">
+                    <li><a class="dropdown-item" href="#" data-algorithm="bfs">BFS</a></li>
+                    <li><a class="dropdown-item" href="#" data-algorithm="dfs">DFS</a></li>
+                    <li><a class="dropdown-item" href="#" data-algorithm="ucs">UCS</a></li>
+                    <li><a class="dropdown-item" href="#" data-algorithm="aStar">A*</a></li>
+                  </ul>
+                </div>
+
+                <button class="btn" style="background-color: #02677c; color: #fff" id="runAlgorithmBtn">Run</button>
+                <button id="getInfoBtn"  class="btn" style="background-color: #ee9b00; color: black">Explanation</button>
               </div>
-
-              <button class="btn" style="background-color: #02677c; color: #fff" id="runAlgorithmBtn">Run</button>
-              <button id="getInfoBtn"  class="btn" style="background-color: #ee9b00; color: black">Explanation</button>
             </div>
           </div>
 
         </div>
       </div>
 
-      <!-- Algorithm Info Modal -->
+      <!-- Explanation Modal -->
       <div class="modal fade" id="algInfoModal" tabindex="-1" aria-labelledby="algInfoModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">

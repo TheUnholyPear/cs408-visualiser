@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // --------- Graph Drawing and Utility Functions ---------
     let linkSelection, nodeSelection, linkLabelSelection;
     function drawGraph() {
-        // LINKS
+        // Links
         linkSelection = linkGroup.selectAll(".link")
             .data(links, link => `${link.source.id}-${link.target.id}`);
         linkSelection.exit().remove();
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("class", "link")
             .merge(linkSelection);
 
-        // Link Labels (if weight exists)
+        // weights
         linkLabelSelection = labelGroup.selectAll(".link-label")
             .data(links.filter(l => l.weight !== undefined), link => `${link.source.id}-${link.target.id}`);
         linkLabelSelection.exit().remove();
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function() {
             .text(d => d.weight);
         linkLabelSelection = linkLabelEntering.merge(linkLabelSelection);
 
-        // NODES
+        // Nodes
         nodeSelection = nodeGroup.selectAll(".node-group")
             .data(nodes, node => node.id);
         nodeSelection.exit().remove();
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function() {
         updateHeuristicVisibility(showHeuristicsFlag)
     }
 
-    // --------- Graph Generation Function ---------
+    // --------- Graph Generation ---------
     function generateRandomGraph(numNodes) {
         wipeCosts();
         wipeLinksAndWeights();
@@ -237,6 +237,7 @@ document.addEventListener("DOMContentLoaded", function() {
         simulation.nodes(nodes);
         simulation.force("link").links(links);
         simulation.alpha(1).restart();
+        for (let i = 0; i < 100; i++) simulation.tick();
         drawGraph();
     }
 
@@ -247,7 +248,6 @@ document.addEventListener("DOMContentLoaded", function() {
             .attr("x2", n => getNode(n.target).x)
             .attr("y2", n => getNode(n.target).y);
 
-        // Midpoint for link labels
         linkLabelSelection
             .attr("x", d => {
                 let source = getNode(d.source), target = getNode(d.target);
@@ -279,6 +279,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return nodes.find(n => n.id === idOrObj);
     }
 
+    // Constrin nodes
     function constrainNode(d) {
         d.x = Math.max(outerRadius, Math.min(width - outerRadius, d.x));
         d.y = Math.max(outerRadius, Math.min(height - outerRadius, d.y));
@@ -291,6 +292,7 @@ document.addEventListener("DOMContentLoaded", function() {
         height = size.height;
     }
 
+    // Graph container resizing
     function resizeGraph() {
         updateContainerSize();
         svg.attr("width", width).attr("height", height);
@@ -300,7 +302,7 @@ document.addEventListener("DOMContentLoaded", function() {
         updatePositions();
     }
 
-    // --------- Search-Tree Functions ---------
+    // --------- Search-Tree ---------
     function buildTreeData(parents, startId) {
         const children = {};
         Object.entries(parents).forEach(([child, parent]) => {
@@ -1221,6 +1223,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // Tutorial Button Event
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
     document.getElementById("tutorialBtn").addEventListener("click", () => {
         const intro = introJs()
         intro.setOptions({
@@ -1336,7 +1339,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         "clicking its inner circle first.",
                     position: "right"
                 },
-                {   element: "#RandomiseWeightsDiv",
+                !isPortrait && {   element: "#RandomiseWeightsDiv",
                     intro: "Toggle this to give the links created to random weights.",
                     position: "right"
                 },
@@ -1389,7 +1392,8 @@ document.addEventListener("DOMContentLoaded", function() {
                         "and view it in either the search tree or graph.",
                     position: "bottom"
                 },
-                {   element: "#toggleTreeBtn",
+                !isPortrait && {
+                    element: "#toggleTreeBtn",
                     intro: "Open the Search Tree panel to see the traversal tree.",
                     position: "left"
                 },
@@ -1398,7 +1402,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         " It can be used in conjunction with the graph or history tab.",
                     position: "left"
                 }
-            ],
+            ].filter(Boolean),
             showStepNumbers: true,
             exitOnOverlayClick: true,
             exitOnEsc: true,
@@ -1443,6 +1447,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         intro.start();
+        setTimeout(() => intro.refresh(), 100);
     });
 
     // addNode Event
@@ -1568,6 +1573,27 @@ document.addEventListener("DOMContentLoaded", function() {
             event.preventDefault();
             selectedAlgorithm = this.getAttribute('data-algorithm');
             document.getElementById('algorithmDropdown').innerText = this.innerText;
+            switch(selectedAlgorithm) {
+                case 'bfs':
+                    hideHeuristics()
+                    hideLinkWeights()
+                    break;
+                case 'dfs':
+                    hideHeuristics()
+                    hideLinkWeights()
+                    break;
+                case 'ucs':
+                    hideHeuristics()
+                    showLinkWeights()
+                    break;
+                case 'aStar':
+                    showHeuristics()
+                    showLinkWeights()
+                    break;
+                default:
+                    hideHeuristics()
+                    hideLinkWeights()
+            }
         });
     });
 

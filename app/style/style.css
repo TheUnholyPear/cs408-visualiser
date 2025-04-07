@@ -11,6 +11,10 @@ html, body {
     height: 5vh;
 }
 
+.navbar-brand{
+    font-size: clamp(0.5rem, 2.5vw, 1rem);
+}
+
 .main-container {
     margin-top: 5vh;
     height: 95vh;
@@ -66,6 +70,7 @@ html, body {
 }
 
 .nav-tabs .nav-link {
+    height: 5vh;
     border-radius: 0 !important;
     box-sizing: border-box;
     border: none;
@@ -73,6 +78,7 @@ html, body {
 }
 
 .nav-tabs .nav-link.active {
+    height: 5vh;
     box-sizing: border-box;
     background-color: cadetblue;
     color: #000;
@@ -396,13 +402,12 @@ html, body {
         overflow: hidden;
         background: #e9ecef;
         border: 5px solid cadetblue;
-        z-index: 1500;
         transform: translateY(0);
     }
 
     .sidebar {
         width: 40vw !important;
-        transition: width -1s !important;
+        transition: width 0s !important;
     }
     .tab-content {
         flex: 0 0 45vh;
@@ -414,5 +419,91 @@ html, body {
     }
     .tree-toggle-btn {
         display: none !important;
+    }
+
+    #topControls {
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        width: calc(100% - 1rem);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        pointer-events: none;
+        padding: 0.5rem;
+        border-radius: 4px;
+        z-index: 10;
+    }
+
+    #toggleSidebar {
+        display: flex !important;
+        align-items: center !important;
+        order: 2;
+        font-size: 0.75rem;
+        flex-shrink: 1;
+        min-width: 0;
+        gap: 0.25rem;
+        position: static;
+        transform: none;
+    }
+
+    #algorithmDropdown,
+    #traversalButtons {
+        pointer-events: auto;
+        order: 1;
+        position: static !important;
+        transform: none !important;
+        border-radius: 4px;
+        flex-shrink: 1 ;
+        display: inline-flex;
+    }
+
+
+    #bottomControls {
+        position: absolute;
+        left: 0.5rem;
+        bottom: 0.5rem;
+        width: calc(100% - 1rem);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 0.5rem;
+        border-radius: 4px;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+    #speedControls {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        flex-shrink: 1;
+        min-width: 0;
+        gap: 0.25rem;
+        position: static;
+    }
+
+    .navControls {
+        pointer-events: auto;
+        position: static !important;
+        transform: none !important;
+        padding: 5px 10px;
+        border-radius: 4px;
+    }
+
+    #speedSlider {
+        width: 50px !important;
+        height: 0.4rem;
+    }
+
+    #traversalButtons .btn,
+    #algorithmDropdown,
+    .navControls .btn,
+    #speedControls {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
     }
 }
